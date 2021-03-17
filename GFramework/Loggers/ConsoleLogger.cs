@@ -10,59 +10,75 @@ namespace GFramework.Loggers
 
     public class ConsoleLogger : BaseLogger
     {
+        void AppendLog(ConsoleColor color, string type, object message)
+        {
+            var date = DateTime.Now;
+            AppendLog(new Action(() =>
+            {
+                Console.ResetColor();
+                Console.Write("{0} - ", date);
+
+                Console.ForegroundColor = color;
+                Console.Write(type);
+
+                Console.ResetColor();
+                Console.WriteLine(" - {0}: {1}", Name, message);
+            }));
+        }
+
         public override void LogDebug(object message)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Gray, "DEBUG", message);
         }
 
         public override void LogDebug(string message, params object[] args)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Gray, "DEBUG", string.Format(message, args));
         }
 
         public override void LogError(object message)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Red, "ERROR", message);
         }
 
         public override void LogError(string message, params object[] args)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Red, "ERROR", string.Format(message, args));
         }
 
         public override void LogFatal(Exception ex)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.DarkRed, "FATAL", ex);
         }
 
         public override void LogInfo(object message)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Cyan, "INFO", message);
         }
 
         public override void LogInfo(string message, params object[] args)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Cyan, "INFO", string.Format(message, args));
         }
 
         public override void LogSuccess(object message)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Green, "SUCCESS", message);
         }
 
         public override void LogSuccess(string message, params object[] args)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Green, "SUCCESS", string.Format(message, args));
         }
 
         public override void LogWarning(object message)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Yellow, "WARNING", message);
         }
 
         public override void LogWarning(string message, params object[] args)
         {
-            throw new NotImplementedException();
+            AppendLog(ConsoleColor.Yellow, "WARNING", string.Format(message, args));
         }
     }
 }

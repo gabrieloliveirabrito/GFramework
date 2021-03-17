@@ -12,15 +12,18 @@ namespace GFramework.Factories
     public class QueueFactory : BaseFactory<IQueue, Queue<object>>, ISingleton
     {
         private static QueueFactory Instance => SingletonFactory.RegisterSingleton<QueueFactory>();
+        private static BaseLogger logger;
 
         void ISingleton.Created()
         {
-            
+            logger = LoggerFactory.GetLogger<QueueFactory>();
+            logger.LogSuccess("LoggerFactory has been created!");
         }
 
         void ISingleton.Destroyed()
         {
-            
+            Instance.RemoveAllInstances((q, nativeQueue) => nativeQueue.Clear());
+            logger.LogInfo("LoggerFactory has been destroyed!");
         }
 
         public static bool IsEmpty(IQueue queue)

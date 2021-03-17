@@ -23,6 +23,8 @@ namespace GFramework.Bases
 
         }
 
+        public bool IsRunning => updaterTask != null && updaterTask.Status == TaskStatus.Running;
+
         public void Start()
         {
             if (updaterTask == null || updaterTask.Status != TaskStatus.Running)

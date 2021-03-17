@@ -31,10 +31,14 @@ namespace GFramework.Factories
             else
             {
                 singleton = Activator.CreateInstance(singletonType) as ISingleton;
-                singleton.Created();
 
                 if (instance.TryRegisterInstance(singletonType, singleton))
+                {
+                    singleton.Created();
+                    LoggerFactory.GetLogger<SingletonFactory>().LogInfo("Singleton {0} has been created!", singletonType.Name);
+
                     return singleton;
+                }
                 else
                     throw new InvalidOperationException("Failed to register a singleton instance!");
             }

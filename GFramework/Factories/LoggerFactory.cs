@@ -28,11 +28,13 @@ namespace GFramework.Factories
             }
         }
 
-        uint IUpdater.Interval => 1000;
+        uint IUpdater.Interval => 100;
         UpdaterMode IUpdater.Mode => UpdaterMode.DelayAfter;
 
         void ISingleton.Created()
         {
+            GetLogger<LoggerFactory>().LogSuccess("LoggerFactory has been started!");
+            UpdaterFactory.Start(this);
         }
 
         void ISingleton.Destroyed()
@@ -41,7 +43,6 @@ namespace GFramework.Factories
 
         void IUpdater.Started()
         {
-            
         }
 
         void IUpdater.Run()
@@ -60,6 +61,7 @@ namespace GFramework.Factories
                 Action callback = QueueFactory.Dequeue<Action>(this);
                 callback();
             }
+            GetLogger<LoggerFactory>().LogInfo("LoggerFactory has been stopped!");
         }
 
         static BaseLogger InitializeLogger(Type loggerType, string name)
