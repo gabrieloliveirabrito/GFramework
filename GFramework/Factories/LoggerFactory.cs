@@ -7,24 +7,29 @@ using System.Threading.Tasks;
 namespace GFramework.Factories
 {
     using Bases;
+    using Enums;
+    using Loggers;
     using Interfaces;
 
-    public class LoggerFactory : BaseFactory<string, BaseLogger>, ISingleton
+    public class LoggerFactory : BaseFactory<string, BaseLogger>, ISingleton, IUpdater, IQueue
     {
         private static LoggerFactory Instance => SingletonFactory.RegisterSingleton<LoggerFactory>();
 
-        private static Type loggerType;
+        private static Type loggerType = typeof(ConsoleLogger);
         public static Type DefaultLoggerType
         {
             get => loggerType;
             set
             {
-                if (value.BaseType != typeof(BaseLogger)
+                if (!value.IsSubclassOf(typeof(BaseLogger)))
                     throw new InvalidCastException("A Logger type need to implements the BaseLogger interface!");
 
                 loggerType = value;
             }
         }
+
+        uint IUpdater.Interval => 1000;
+        UpdaterMode IUpdater.Mode => UpdaterMode.DelayAfter;
 
         void ISingleton.Created()
         {
@@ -34,11 +39,34 @@ namespace GFramework.Factories
         {
         }
 
+        void IUpdater.Started()
+        {
+            
+        }
+
+        void IUpdater.Run()
+        {
+            if(!QueueFactory.IsEmpty(this))
+            {
+                Action callback = QueueFactory.Dequeue<Action>(this);
+                callback();
+            }
+        }
+
+        void IUpdater.Stopped()
+        {
+            while (!QueueFactory.IsEmpty(this))
+            {
+                Action callback = QueueFactory.Dequeue<Action>(this);
+                callback();
+            }
+        }
+
         static BaseLogger InitializeLogger(Type loggerType, string name)
         {
             if (loggerType == null)
                 throw new NullReferenceException("LoggerType can't be null!");
-            else if (loggerType.BaseType != typeof(BaseLogger))
+            else if (!loggerType.IsSubclassOf(typeof(BaseLogger)))
                 throw new InvalidCastException("A Logger type need to implements the BaseLogger interface!");
 
             BaseLogger logger = (BaseLogger)Activator.CreateInstance(loggerType);
@@ -71,5 +99,10 @@ namespace GFramework.Factories
         public static BaseLogger GetLogger(Type type) => GetLogger(type.Name);
         public static TLogger GetLogger<TLogger>(Type type) where TLogger : BaseLogger, new()
             => GetLogger<TLogger>(type.Name);
+
+        protected internal static void AppendLog(Action callback)
+        {
+            QueueFactory.Enqueue(Instance, callback);
+        }
     }
 }

@@ -43,12 +43,16 @@
   <ItemGroup>
     <Compile Include="Bases\BaseFactory.cs" />
     <Compile Include="Bases\BaseLogger.cs" />
+    <Compile Include="Bases\BaseUpdater.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Enums\UpdaterMode.cs" />
     <Compile Include="Factories\ComponentFactory.cs" />
     <Compile Include="Factories\LoggerFactory.cs" />
+    <Compile Include="Factories\QueueFactory.cs" />
     <Compile Include="Factories\SingletonFactory.cs" />
+    <Compile Include="Factories\UpdaterFactory.cs" />
     <Compile Include="Interfaces\IComponent.cs" />
+    <Compile Include="Interfaces\IQueue.cs" />
     <Compile Include="Interfaces\ISingleton.cs" />
     <Compile Include="Interfaces\IUpdater.cs" />
     <Compile Include="Loggers\ConsoleLogger.cs" />

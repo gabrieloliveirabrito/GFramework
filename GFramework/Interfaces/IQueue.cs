@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GFramework.Enums
+namespace GFramework.Interfaces
 {
-    public enum UpdaterMode
+    public interface IQueue
     {
-        None,
-        DelayBefore,
-        DelayAfter
     }
 }

@@ -9,6 +9,7 @@ namespace GFramework.Interfaces
     using Enums;
     public interface IUpdater
     {
+        uint Interval { get; }
         UpdaterMode Mode { get; }
 
         void Started();
