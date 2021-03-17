@@ -42,18 +42,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bases\BaseFactory.cs" />
+    <Compile Include="Bases\BaseLogger.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Enums\UpdaterMode.cs" />
     <Compile Include="Factories\ComponentFactory.cs" />
     <Compile Include="Factories\LoggerFactory.cs" />
     <Compile Include="Factories\SingletonFactory.cs" />
     <Compile Include="Interfaces\IComponent.cs" />
-    <Compile Include="Interfaces\ILogger.cs" />
     <Compile Include="Interfaces\ISingleton.cs" />
+    <Compile Include="Interfaces\IUpdater.cs" />
+    <Compile Include="Loggers\ConsoleLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Enums\" />
-    <Folder Include="Loggers\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
