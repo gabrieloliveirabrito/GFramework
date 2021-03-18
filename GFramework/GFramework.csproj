@@ -51,6 +51,7 @@
     <Compile Include="Factories\QueueFactory.cs" />
     <Compile Include="Factories\SingletonFactory.cs" />
     <Compile Include="Factories\UpdaterFactory.cs" />
+    <Compile Include="Holders\ComponentHolder.cs" />
     <Compile Include="Interfaces\IComponent.cs" />
     <Compile Include="Interfaces\IQueue.cs" />
     <Compile Include="Interfaces\ISingleton.cs" />
