@@ -12,25 +12,26 @@ namespace GFramework.Factories
     public class QueueFactory : BaseFactory<IQueue, Queue<object>>, ISingleton
     {
         private static QueueFactory Instance => SingletonFactory.RegisterSingleton<QueueFactory>();
-        private static BaseLogger logger;
 
         void ISingleton.Created()
         {
-            logger = LoggerFactory.GetLogger<QueueFactory>();
-            logger.LogSuccess("LoggerFactory has been created!");
         }
 
         void ISingleton.Destroyed()
         {
             Instance.RemoveAllInstances((q, nativeQueue) => nativeQueue.Clear());
-            logger.LogInfo("LoggerFactory has been destroyed!");
+        }
+
+        public static void RegisterQueue(IQueue queue)
+        {
+            if (!Instance.TryGetInstance(queue, out _))
+                Instance.TryRegisterInstance(queue, new Queue<object>());
         }
 
         public static bool IsEmpty(IQueue queue)
         {
             if (!Instance.TryGetInstance(queue, out Queue<object> nativeQueue))
-                if (!Instance.TryRegisterInstance(queue, nativeQueue = new Queue<object>()))
-                    throw new InvalidOperationException("The queue hasn't registered");
+                throw new InvalidOperationException("The queue hasn't registered");
 
             return nativeQueue.Count() == 0;
         }
@@ -38,8 +39,7 @@ namespace GFramework.Factories
         public static void ClearQueue(IQueue queue)
         {
             if (!Instance.TryGetInstance(queue, out Queue<object> nativeQueue))
-                if (!Instance.TryRegisterInstance(queue, nativeQueue = new Queue<object>()))
-                    throw new InvalidOperationException("The queue hasn't registered");
+                throw new InvalidOperationException("The queue hasn't registered");
 
             nativeQueue.Clear();
         }
@@ -47,8 +47,7 @@ namespace GFramework.Factories
         public static void Enqueue(IQueue queue, object value)
         {
             if (!Instance.TryGetInstance(queue, out Queue<object> nativeQueue))
-                if (!Instance.TryRegisterInstance(queue, nativeQueue = new Queue<object>()))
-                    throw new InvalidOperationException("The queue hasn't registered");
+                throw new InvalidOperationException("The queue hasn't registered");
 
             nativeQueue.Enqueue(value);
         }
@@ -62,6 +61,22 @@ namespace GFramework.Factories
                 throw new InvalidOperationException("The queue hasn't registered");
             else
                 return nativeQueue.Dequeue();
+        }
+
+        public static T[] DequeueAll<T>(IQueue queue)
+            => DequeueAll(queue).Cast<T>().ToArray();
+
+        public static object[] DequeueAll(IQueue queue)
+        {
+            if (!Instance.TryGetInstance(queue, out Queue<object> nativeQueue))
+                throw new InvalidOperationException("The queue hasn't registered");
+            else
+            {
+                object[] items = nativeQueue.ToArray();
+                nativeQueue.Clear();
+
+                return items;
+            }
         }
     }
 }

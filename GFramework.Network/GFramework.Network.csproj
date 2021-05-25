@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EAA70469-296F-4BC7-B71E-EF0E613527BA}</ProjectGuid>
+    <ProjectGuid>{B537BA5B-306B-4D64-B032-702705765563}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GFramework</RootNamespace>
-    <AssemblyName>GFramework</AssemblyName>
+    <RootNamespace>GFramework.Network</RootNamespace>
+    <AssemblyName>GFramework.Network</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -41,28 +41,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bases\BaseFactory.cs" />
-    <Compile Include="Bases\BaseLog.cs" />
-    <Compile Include="Bases\BaseLogger.cs" />
-    <Compile Include="Bases\BaseLogWriter.cs" />
-    <Compile Include="Bases\BaseUpdater.cs" />
+    <Compile Include="Bases\BasePacketReader.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Enums\LogType.cs" />
-    <Compile Include="Enums\UpdaterMode.cs" />
-    <Compile Include="Factories\ComponentFactory.cs" />
-    <Compile Include="Factories\LoggerFactory.cs" />
-    <Compile Include="Factories\QueueFactory.cs" />
-    <Compile Include="Factories\SingletonFactory.cs" />
-    <Compile Include="Factories\UpdaterFactory.cs" />
-    <Compile Include="Holders\ComponentHolder.cs" />
-    <Compile Include="Interfaces\IComponent.cs" />
-    <Compile Include="Interfaces\IQueue.cs" />
-    <Compile Include="Interfaces\ISingleton.cs" />
-    <Compile Include="Interfaces\IUpdater.cs" />
-    <Compile Include="LogWriters\ConsoleLogger.cs" />
-    <Compile Include="LogWriters\FileLogger.cs" />
+    <Compile Include="PacketReaders\BitPacketReader.cs" />
+    <Compile Include="TCPClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TCPServer.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\GFramework\GFramework.csproj">
+      <Project>{eaa70469-296f-4bc7-b71e-ef0e613527ba}</Project>
+      <Name>GFramework</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

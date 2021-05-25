@@ -50,6 +50,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GFramework.Network\GFramework.Network.csproj">
+      <Project>{b537ba5b-306b-4d64-b032-702705765563}</Project>
+      <Name>GFramework.Network</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GFramework\GFramework.csproj">
       <Project>{eaa70469-296f-4bc7-b71e-ef0e613527ba}</Project>
       <Name>GFramework</Name>

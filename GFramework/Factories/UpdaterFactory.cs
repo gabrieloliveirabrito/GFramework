@@ -31,6 +31,17 @@ namespace GFramework.Factories
                 baseUpdater.Stop();
         }
 
+        public static bool IsRunning(IUpdater updater)
+        {
+            return Instance.TryGetInstance(updater, out BaseUpdater baseUpdater) ? baseUpdater.IsRunning : false;
+        }
+
+        public static bool IsRunning<TUpdater>()
+            where TUpdater : IUpdater
+        {
+            return Instance.TryGetInstanceByType<TUpdater>(out BaseUpdater baseUpdater) ? baseUpdater.IsRunning : false;
+        }
+
         void ISingleton.Created()
         {
           
@@ -38,7 +49,7 @@ namespace GFramework.Factories
 
         void ISingleton.Destroyed()
         {
-           
+            Instance.RemoveAllInstances((u, baseUpdater) => baseUpdater.Stop());
         }
     }
 }

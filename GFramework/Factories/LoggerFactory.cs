@@ -8,14 +8,16 @@ namespace GFramework.Factories
 {
     using Bases;
     using Enums;
-    using Loggers;
+    using LogWriters;
     using Interfaces;
 
     public class LoggerFactory : BaseFactory<string, BaseLogger>, ISingleton, IUpdater, IQueue
     {
         private static LoggerFactory Instance => SingletonFactory.RegisterSingleton<LoggerFactory>();
 
-        private static Type loggerType = typeof(ConsoleLogger);
+        private List<BaseLogWriter> writers;
+
+        private static Type loggerType = typeof(BaseLogger);
         public static Type DefaultLoggerType
         {
             get => loggerType;
@@ -28,17 +30,23 @@ namespace GFramework.Factories
             }
         }
 
-        uint IUpdater.Interval => 100;
+        uint IUpdater.Interval => QueueFactory.IsEmpty(this) ? 100u : 1u;
         UpdaterMode IUpdater.Mode => UpdaterMode.DelayAfter;
 
         void ISingleton.Created()
         {
-            GetLogger<LoggerFactory>().LogSuccess("LoggerFactory has been started!");
+            writers = new List<BaseLogWriter>();
+            AddLogWriter<ConsoleLogWriter>();
+
+            QueueFactory.RegisterQueue(this);
             UpdaterFactory.Start(this);
         }
 
         void ISingleton.Destroyed()
         {
+            if (UpdaterFactory.IsRunning(this))
+                UpdaterFactory.Stop(this);
+            writers.Clear();
         }
 
         void IUpdater.Started()
@@ -49,32 +57,40 @@ namespace GFramework.Factories
         {
             if(!QueueFactory.IsEmpty(this))
             {
-                Action callback = QueueFactory.Dequeue<Action>(this);
-                callback();
+                BaseLog log = QueueFactory.Dequeue<BaseLog>(this);
+
+                foreach(BaseLogWriter writer in writers)
+                    writer.Write(log);
             }
         }
 
         void IUpdater.Stopped()
         {
-            while (!QueueFactory.IsEmpty(this))
-            {
-                Action callback = QueueFactory.Dequeue<Action>(this);
+            Action[] callbacks = QueueFactory.DequeueAll<Action>(this);
+
+            foreach (Action callback in callbacks)
                 callback();
-            }
-            GetLogger<LoggerFactory>().LogInfo("LoggerFactory has been stopped!");
         }
 
-        static BaseLogger InitializeLogger(Type loggerType, string name)
+        BaseLogger InitializeLogger(Type loggerType, string name)
         {
             if (loggerType == null)
                 throw new NullReferenceException("LoggerType can't be null!");
-            else if (!loggerType.IsSubclassOf(typeof(BaseLogger)))
+            else if (loggerType != typeof(BaseLogger) && !loggerType.IsSubclassOf(typeof(BaseLogger)))
                 throw new InvalidCastException("A Logger type need to implements the BaseLogger interface!");
 
-            BaseLogger logger = (BaseLogger)Activator.CreateInstance(loggerType);
+            BaseLogger logger = (BaseLogger)Activator.CreateInstance(loggerType, name);
             logger.Name = name;
+            logger.Factory = this;
 
             return logger;
+        }
+
+        public static void AddLogWriter<TLogWriter>()
+            where TLogWriter : BaseLogWriter
+        {
+            if (!Instance.writers.Any(w => w.GetType() == typeof(TLogWriter)))
+                Instance.writers.Add(Activator.CreateInstance<TLogWriter>());
         }
 
         public static BaseLogger GetLogger(string name)
@@ -82,29 +98,16 @@ namespace GFramework.Factories
             if (Instance.TryGetInstance(name, out BaseLogger logger))
                 return logger;
             else
-                return Instance.RegisterInstance(name, InitializeLogger(DefaultLoggerType, name));
-        }
-
-        public static TLogger GetLogger<TLogger>(string name)
-            where TLogger : BaseLogger, new()
-        {
-            if (Instance.TryGetInstance(name, out BaseLogger logger))
-                return (TLogger)logger;
-            else
-                return (TLogger)Instance.RegisterInstance(name, InitializeLogger(typeof(TLogger), name));
+                return Instance.RegisterInstance(name, Instance.InitializeLogger(DefaultLoggerType, name));
         }
 
         public static BaseLogger GetLogger<T>() => GetLogger(typeof(T));
-        public static TLogger GetLogger<T, TLogger>() where TLogger : BaseLogger, new()
-            => GetLogger<TLogger>(typeof(T));
-
         public static BaseLogger GetLogger(Type type) => GetLogger(type.Name);
-        public static TLogger GetLogger<TLogger>(Type type) where TLogger : BaseLogger, new()
-            => GetLogger<TLogger>(type.Name);
 
-        protected internal static void AppendLog(Action callback)
+        protected internal void AppendLog(LogType type, string name, string message)
         {
-            QueueFactory.Enqueue(Instance, callback);
+            if (UpdaterFactory.IsRunning(this))
+                QueueFactory.Enqueue(this, new BaseLog(type, name, message));
         }
     }
 }

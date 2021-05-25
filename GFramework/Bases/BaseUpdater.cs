@@ -23,14 +23,15 @@ namespace GFramework.Bases
 
         }
 
-        public bool IsRunning => updaterTask != null && updaterTask.Status == TaskStatus.Running;
+        public bool IsRunning => updaterTask != null && !cancelSource.IsCancellationRequested;
 
         public void Start()
         {
             if (updaterTask == null || updaterTask.Status != TaskStatus.Running)
             {
                 cancelSource = new CancellationTokenSource();
-                updaterTask = Task.Run(Work, cancelSource.Token);
+                updaterTask = new Task(Work, cancelSource.Token, TaskCreationOptions.LongRunning);
+                updaterTask.Start();
             }
         }
 

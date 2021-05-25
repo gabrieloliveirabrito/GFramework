@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GFramework", "GFramework\GF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{26A7B41F-2A7A-4577-8DA2-DEF2D4A5B3E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GFramework.Network", "GFramework.Network\GFramework.Network.csproj", "{B537BA5B-306B-4D64-B032-702705765563}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{26A7B41F-2A7A-4577-8DA2-DEF2D4A5B3E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26A7B41F-2A7A-4577-8DA2-DEF2D4A5B3E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26A7B41F-2A7A-4577-8DA2-DEF2D4A5B3E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B537BA5B-306B-4D64-B032-702705765563}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B537BA5B-306B-4D64-B032-702705765563}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B537BA5B-306B-4D64-B032-702705765563}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B537BA5B-306B-4D64-B032-702705765563}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

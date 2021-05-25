@@ -11,6 +11,8 @@ namespace GFramework.Factories
 
     public class SingletonFactory : BaseFactory<Type, ISingleton>
     {
+        private static object syncLock = new object();
+
         private static SingletonFactory _instance;
         protected static SingletonFactory instance
             => _instance ?? (_instance = new SingletonFactory());
@@ -23,24 +25,26 @@ namespace GFramework.Factories
 
         public static ISingleton RegisterSingleton(Type singletonType)
         {
-            ISingleton singleton;
-            if (!typeof(ISingleton).IsAssignableFrom(singletonType) || singletonType.IsInterface || singletonType.IsAbstract)
-                throw new InvalidOperationException("Invalid singleton type!");
-            else if (instance.TryGetInstance(singletonType, out singleton))
-                return singleton;
-            else
+            lock (syncLock)
             {
-                singleton = Activator.CreateInstance(singletonType) as ISingleton;
-
-                if (instance.TryRegisterInstance(singletonType, singleton))
-                {
-                    singleton.Created();
-                    LoggerFactory.GetLogger<SingletonFactory>().LogInfo("Singleton {0} has been created!", singletonType.Name);
-
+                ISingleton singleton;
+                if (!typeof(ISingleton).IsAssignableFrom(singletonType) || singletonType.IsInterface || singletonType.IsAbstract)
+                    throw new InvalidOperationException("Invalid singleton type!");
+                else if (instance.TryGetInstance(singletonType, out singleton))
                     return singleton;
-                }
                 else
-                    throw new InvalidOperationException("Failed to register a singleton instance!");
+                {
+                    singleton = Activator.CreateInstance(singletonType) as ISingleton;
+
+                    if (instance.TryRegisterInstance(singletonType, singleton))
+                    {
+                        singleton.Created();
+
+                        return singleton;
+                    }
+                    else
+                        throw new InvalidOperationException("Failed to register a singleton instance!");
+                }
             }
         }
 
