@@ -4,24 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GFramework.Network.PacketReaders
+namespace GFramework.Network.Packets
 {
     using Bases;
     using Factories;
 
-    public class BitPacketReader : BasePacketReader
+    public class BitPacketReader : BasePacket
     {
         public override byte[] Data { get; set; }
-        public override int Offset { get; set; }
+        public int Offset { get; set; }
 
-        public BitPacketReader(uint id) : base(id)
+        public BitPacketReader(ulong id) : base(id)
         {
-            Length = 0;
+            Data = new byte[Constants.MaxPacketLength];
         }
 
-        public BitPacketReader(uint id, byte[] buffer) : base(id, buffer)
+        public BitPacketReader(ulong id, byte[] buffer) : base(id, buffer)
         {
-            Length = 1;
+
         }
 
         private bool disposed = false;
@@ -38,9 +38,14 @@ namespace GFramework.Network.PacketReaders
 
         public override void Clear()
         {
-            Array.Clear(Data, 0, Length);
+            //Array.Clear(Data, 0, Length);
             Offset = 0;
             Length = 0;
+        }
+
+        public override void Reset()
+        {
+            Offset = 0;
         }
 
         public override bool ReadBoolean()
@@ -56,13 +61,13 @@ namespace GFramework.Network.PacketReaders
 
         public override byte[] ReadBytes(int length)
         {
-            byte[] buffer = new byte[length];
-            Buffer.BlockCopy(Data, Offset, buffer, 0, length);
+            byte[] data = new byte[length];
+            Buffer.BlockCopy(Data, Offset, data, 0, length);
+
+            //LoggerFactory.GetLogger<BitPacketReader>().LogInfo("Reading O:{0} B:{1}", Offset, BitConverter.ToString(data));
+
             Offset += length;
-
-
-            //LoggerFactory.GetLogger<BitPacketReader>().LogInfo("Readed Buffer {0}", BitConverter.ToString(buffer));
-            return buffer;
+            return data;
         }
 
         public override decimal ReadDecimal()
@@ -144,7 +149,7 @@ namespace GFramework.Network.PacketReaders
 
         public override void WriteBytes(byte[] data)
         {
-            //LoggerFactory.GetLogger<BitPacketReader>().LogInfo("Writing Buffer {0}", BitConverter.ToString(data));
+            //LoggerFactory.GetLogger<BitPacketReader>().LogInfo("Writing O:{0} B:{1}", Offset, BitConverter.ToString(data));
             Buffer.BlockCopy(data, 0, Data, Offset, data.Length);
             Length += data.Length;
             Offset += data.Length;

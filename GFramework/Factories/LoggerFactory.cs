@@ -103,6 +103,7 @@ namespace GFramework.Factories
 
         public static BaseLogger GetLogger<T>() => GetLogger(typeof(T));
         public static BaseLogger GetLogger(Type type) => GetLogger(type.Name);
+        public static BaseLogger GetLogger<T>(T o) => GetLogger(typeof(T));
 
         protected internal void AppendLog(LogType type, string name, string message)
         {

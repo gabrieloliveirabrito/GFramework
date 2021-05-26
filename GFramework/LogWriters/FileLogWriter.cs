@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace GFramework.LogWriters
 {
-using Bases;
-using Enums;
+    using Bases;
+    using Enums;
 
     public class FileLogWriter : BaseLogWriter
     {
@@ -18,7 +18,7 @@ using Enums;
         public FileLogWriter()
         {
             DateTime startdate = Process.GetCurrentProcess().StartTime;
-            dateString = startdate.ToString("dd_MM_yyyy");
+            dateString = startdate.ToString("dd_MM_yyyy_HH_mm_ss");
         }
 
         public override void Write(BaseLog log)

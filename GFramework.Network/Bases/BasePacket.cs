@@ -6,30 +6,27 @@ using System.Threading.Tasks;
 
 namespace GFramework.Network.Bases
 {
-    public abstract class BasePacketReader : IDisposable
+    public abstract class BasePacket : IDisposable
     {
-        public uint ID { get; set; }
+        public ulong ID { get; set; }
         public abstract byte[] Data { get; set; }
 
-        public abstract int Offset { get; set; }
-        public int Length { get; protected set; }
+        public virtual long Length { get; protected set; }
 
-        public BasePacketReader(uint id)
+        public BasePacket(ulong id)
         {
             ID = id;
-            Data = new byte[Constants.MaxPacketLength];
-            Length = 0;
-            Offset = 0;
         }
 
-        public BasePacketReader(uint id, byte[] data) : this(id)
+        public BasePacket(ulong id, byte[] data) : this(id)
         {
-            Buffer.BlockCopy(Data, 0, data, 0, data.Length);
+            Buffer.BlockCopy(data, 0, Data, 0, data.Length);
             Length = data.Length;
         }
 
         public abstract void Dispose();
         public abstract void Clear();
+        public abstract void Reset();
 
         public abstract byte ReadByte();
         public abstract byte[] ReadBytes(int length);

@@ -40,7 +40,7 @@ namespace GFramework.LogWriters
             Console.Write(log.Type.ToString().ToUpperInvariant());
 
             Console.ResetColor();
-            Console.WriteLine(" - {0} - {1}: {2}", log.Time, log.Name, log.Message);
+            Console.WriteLine(" - {0}: {1}", log.Name, log.Message);
 
         }
     }

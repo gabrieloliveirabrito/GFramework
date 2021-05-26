@@ -59,8 +59,8 @@
     <Compile Include="Interfaces\IQueue.cs" />
     <Compile Include="Interfaces\ISingleton.cs" />
     <Compile Include="Interfaces\IUpdater.cs" />
-    <Compile Include="LogWriters\ConsoleLogger.cs" />
-    <Compile Include="LogWriters\FileLogger.cs" />
+    <Compile Include="LogWriters\ConsoleLogWriter.cs" />
+    <Compile Include="LogWriters\FileLogWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

@@ -41,9 +41,26 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bases\BasePacketReader.cs" />
+    <Compile Include="Bases\BasePacket.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="PacketReaders\BitPacketReader.cs" />
+    <Compile Include="Enums\DisconnectReason.cs" />
+    <Compile Include="Enums\PacketEvent.cs" />
+    <Compile Include="EventArgs\BaseClientEventArgs.cs" />
+    <Compile Include="EventArgs\BaseServerEventArgs.cs" />
+    <Compile Include="EventArgs\Client\ClientConnectedEventArgs.cs" />
+    <Compile Include="EventArgs\Client\ClientDisconnectedEventArgs.cs" />
+    <Compile Include="EventArgs\Client\ClientErrorEventArgs.cs" />
+    <Compile Include="EventArgs\Client\PacketReceivedEventArgs.cs" />
+    <Compile Include="EventArgs\Client\PacketSentEventArgs.cs" />
+    <Compile Include="EventArgs\Server\ClientConnectedEventArgs.cs" />
+    <Compile Include="EventArgs\Server\ServerErrorEventArgs.cs" />
+    <Compile Include="EventArgs\Server\ServerOpenedEventArgs.cs" />
+    <Compile Include="EventArgs\Server\ServerClosedEventArgs.cs" />
+    <Compile Include="Holders\PacketHolder.cs" />
+    <Compile Include="Interfaces\IClient.cs" />
+    <Compile Include="Interfaces\IServer.cs" />
+    <Compile Include="Packets\BitPacketReader.cs" />
+    <Compile Include="Packets\StreamPacketReader.cs" />
     <Compile Include="TCPClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TCPServer.cs" />
@@ -54,5 +71,6 @@
       <Name>GFramework</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
