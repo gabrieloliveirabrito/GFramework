@@ -20,13 +20,18 @@ namespace GFramework.Network.Interfaces
 
         event EventHandler<ClientConnectedEventArgs<TClient, TPacket>> OnConnected;
         event EventHandler<ClientDisconnectedEventArgs<TClient, TPacket>> OnDisconnected;
-        event EventHandler<PacketReceivedEventArgs<TClient, TPacket>> OnPacketReceived;
-        event EventHandler<PacketSentEventArgs<TClient, TPacket>> OnPacketSent;
         event EventHandler<ClientErrorEventArgs<TClient, TPacket>> OnClientError;
+        event EventHandler<PacketSentEventArgs<TClient, TPacket>> OnPacketSent;
+        event EventHandler<PacketReceivedEventArgs<TClient, TPacket>> OnPacketReceived;
+        event EventHandler<PingSentEventArgs<TClient, TPacket>> OnPingSent;
+        event EventHandler<PingReceivedEventArgs<TClient, TPacket>> OnPingReceived;
+        event EventHandler<PongSentEventArgs<TClient, TPacket>> OnPongSent;
+        event EventHandler<PongReceivedEventArgs<TClient, TPacket>> OnPongReceived;
 
         bool Connect();
         bool Disconnect();
 
-        void Send(BasePacket packet);
+        void Send(TPacket packet);
+        void Ping();
     }
 }

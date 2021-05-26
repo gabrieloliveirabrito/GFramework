@@ -36,16 +36,13 @@ namespace GFramework.Network.Packets
 
         public StreamPacketReader(ulong id) : base(id)
         {
-            memory = new MemoryStream();
-            reader = new BinaryReader(memory);
-            writer = new BinaryWriter(memory);
+            Clear();
         }
 
         public StreamPacketReader(ulong id, byte[] buffer) : base(id)
         {
             memory = new MemoryStream(buffer);
             memory.Position = 0;
-
 
             reader = new BinaryReader(memory);
             writer = new BinaryWriter(memory);
@@ -65,11 +62,9 @@ namespace GFramework.Network.Packets
 
         public override void Clear()
         {
-            byte[] buffer = memory.GetBuffer();
-            Array.Clear(buffer, 0, buffer.Length);
-
-            memory.Position = 0;
-            memory.SetLength(0);
+            memory = new MemoryStream();
+            reader = new BinaryReader(memory);
+            writer = new BinaryWriter(memory);
         }
 
         public override void Reset()
@@ -99,6 +94,7 @@ namespace GFramework.Network.Packets
         public override uint ReadUInt() => reader.ReadUInt32();
         public override ulong ReadULong() => reader.ReadUInt64();
         public override ushort ReadUShort() => reader.ReadUInt16();
+        public override DateTime ReadDateTime() => new DateTime(reader.ReadInt64());
 
         public override void WriteBoolean(bool data) => writer.Write(data);
         public override void WriteByte(byte data) => writer.Write(data);
@@ -120,5 +116,6 @@ namespace GFramework.Network.Packets
         public override void WriteUInt(uint data) => writer.Write(data);
         public override void WriteULong(ulong data) => writer.Write(data);
         public override void WriteUShort(ushort data) => writer.Write(data);
+        public override void WriteDateTime(DateTime data) => writer.Write(data.Ticks);
     }
 }

@@ -27,7 +27,7 @@ namespace GFramework.Network.Interfaces
         bool Open();
         bool Close();
 
-        void SendToAll(BasePacket packet);
+        void SendToAll(TPacket packet);
         void DisconnectAll();
     }
 }

@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace GFramework.Network.EventArgs.Client
 {
-    using Bases;
     using Interfaces;
+    using Bases;
 
-    public class PacketSentEventArgs<TClient, TPacket> : BaseClientEventArgs<TClient, TPacket>
+    public class PingReceivedEventArgs<TClient, TPacket> : BaseClientEventArgs<TClient, TPacket>
         where TClient : IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
-        public TPacket Packet { get; private set; }
+        public DateTime SentAt { get; private set; }
 
-        public PacketSentEventArgs(TClient client, TPacket packet) : base(client)
+        public PingReceivedEventArgs(TClient client, DateTime sentAt) : base(client)
         {
-            Packet = packet;
+            SentAt = sentAt;
         }
     }
 }

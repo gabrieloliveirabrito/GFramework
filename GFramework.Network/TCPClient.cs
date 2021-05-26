@@ -16,12 +16,13 @@ namespace GFramework.Network
     using EventArgs.Client;
     using Holders;
     using Interfaces;
+    using System.Threading;
 
     public class TCPClient<TPacket> : IClient<TCPClient<TPacket>, TPacket>
         where TPacket : BasePacket
     {
-        BaseLogger logger;
-
+        private BaseLogger logger;
+        private ManualResetEvent sendLock;
         private IPEndPoint endPoint;
 
         public event EventHandler<ClientConnectedEventArgs<TCPClient<TPacket>, TPacket>> OnConnected;
@@ -29,6 +30,10 @@ namespace GFramework.Network
         public event EventHandler<PacketReceivedEventArgs<TCPClient<TPacket>, TPacket>> OnPacketReceived;
         public event EventHandler<PacketSentEventArgs<TCPClient<TPacket>, TPacket>> OnPacketSent;
         public event EventHandler<ClientErrorEventArgs<TCPClient<TPacket>, TPacket>> OnClientError;
+        public event EventHandler<PingSentEventArgs<TCPClient<TPacket>, TPacket>> OnPingSent;
+        public event EventHandler<PingReceivedEventArgs<TCPClient<TPacket>, TPacket>> OnPingReceived;
+        public event EventHandler<PongSentEventArgs<TCPClient<TPacket>, TPacket>> OnPongSent;
+        public event EventHandler<PongReceivedEventArgs<TCPClient<TPacket>, TPacket>> OnPongReceived;
 
         public IPEndPoint EndPoint
         {
@@ -51,8 +56,6 @@ namespace GFramework.Network
             get => Socket != null && Socket.Connected;
         }
 
-        public bool DisconnectOnError { get; set; }
-
         public TCPClient(IPAddress address, int port) : this(new IPEndPoint(address, port))
         {
 
@@ -60,17 +63,72 @@ namespace GFramework.Network
 
         public TCPClient(IPEndPoint endpoint)
         {
-            DisconnectOnError = false;
             logger = LoggerFactory.GetLogger(this);
             endPoint = endpoint;
         }
 
         protected internal TCPClient(Socket socket)
         {
-            DisconnectOnError = false;
+            logger = LoggerFactory.GetLogger(this);
             EndPoint = (IPEndPoint)socket.RemoteEndPoint;
             Socket = socket;
         }
+
+        #region Event Invokers
+        protected internal void InvokeOnConnected()
+        {
+            if (OnConnected != null)
+                OnConnected(this, new ClientConnectedEventArgs<TCPClient<TPacket>, TPacket>(this));
+        }
+
+        protected internal void InvokeOnDisconnected(DisconnectReason reason)
+        {
+            if (OnDisconnected != null)
+                OnDisconnected(this, new ClientDisconnectedEventArgs<TCPClient<TPacket>, TPacket>(this, reason));
+        }
+
+        protected internal void InvokeOnClientError(string methodName, Exception ex)
+        {
+            if (OnClientError != null)
+                OnClientError(this, new ClientErrorEventArgs<TCPClient<TPacket>, TPacket>(this, methodName, ex));
+        }
+
+        protected internal void InvokeOnPacketReceived(TPacket packet)
+        {
+            if (OnPacketReceived != null)
+                OnPacketReceived(this, new PacketReceivedEventArgs<TCPClient<TPacket>, TPacket>(this, packet));
+        }
+
+        protected internal void InvokeOnPacketSent(TPacket packet)
+        {
+            if (OnPacketSent != null)
+                OnPacketSent(this, new PacketSentEventArgs<TCPClient<TPacket>, TPacket>(this, packet));
+        }
+
+        protected internal void InvokeOnPingSent(DateTime sentAt)
+        {
+            if (OnPingSent != null)
+                OnPingSent(this, new PingSentEventArgs<TCPClient<TPacket>, TPacket>(this, sentAt));
+        }
+
+        protected internal void InvokeOnPingReceived(DateTime sentAt)
+        {
+            if (OnPingReceived != null)
+                OnPingReceived(this, new PingReceivedEventArgs<TCPClient<TPacket>, TPacket>(this, sentAt));
+        }
+
+        protected internal void InvokeOnPongSent(DateTime sentAt, DateTime receivedAt)
+        {
+            if (OnPongSent != null)
+                OnPongSent(this, new PongSentEventArgs<TCPClient<TPacket>, TPacket>(this, sentAt, receivedAt));
+        }
+
+        protected internal void InvokeOnPongReceived(DateTime sentAt, DateTime receivedAt)
+        {
+            if (OnPongReceived != null)
+                OnPongReceived(this, new PongReceivedEventArgs<TCPClient<TPacket>, TPacket>(this, sentAt, receivedAt));
+        }
+        #endregion
 
         public bool Connect()
         {
@@ -97,46 +155,27 @@ namespace GFramework.Network
             return Disconnect(DisconnectReason.UserRequest);
         }
 
+        public void Ping()
+        {
+            var packet = CreatePacket(0x0);
+            packet.WriteDateTime(DateTime.Now);
+
+            BeginSendEvent(PacketEvent.Ping, packet);
+        }
+
         public TPacket CreatePacket(ulong id)
         {
             return (TPacket)Activator.CreateInstance(typeof(TPacket), id);
         }
 
-        public void Send(BasePacket packet)
+        protected internal TPacket CreatePacket(ulong id, byte[] data)
         {
-            var holder = new PacketHolder(packet);
-            
-            BeginSendHeader(holder);
+            return (TPacket)Activator.CreateInstance(typeof(TPacket), id, data);
         }
 
-        protected internal void InvokeOnConnected()
+        public void Send(TPacket packet)
         {
-            if (OnConnected != null)
-                OnConnected(this, new ClientConnectedEventArgs<TCPClient<TPacket>, TPacket>(this));
-        }
-
-        protected internal void InvokeOnDisconnected(DisconnectReason reason)
-        {
-            if (OnDisconnected != null)
-                OnDisconnected(this, new ClientDisconnectedEventArgs<TCPClient<TPacket>, TPacket>(this, reason));
-        }
-
-        protected internal void InvokeOnClientError(string methodName, Exception ex)
-        {
-            if (OnClientError != null)
-                OnClientError(this, new ClientErrorEventArgs<TCPClient<TPacket>, TPacket>(this, methodName, ex));
-        }
-
-        protected internal void InvokeOnPacketReceived(BasePacket packet)
-        {
-            if (OnPacketReceived != null)
-                OnPacketReceived(this, new PacketReceivedEventArgs<TCPClient<TPacket>, TPacket>(this, packet));
-        }
-
-        protected internal void InvokeOnPacketSent(BasePacket packet)
-        {
-            if (OnPacketSent != null)
-                OnPacketSent(this, new PacketSentEventArgs<TCPClient<TPacket>, TPacket>(this, packet));
+            BeginSendEvent(PacketEvent.Receive, packet);
         }
 
         protected internal bool Disconnect(DisconnectReason reason)
@@ -176,15 +215,88 @@ namespace GFramework.Network
         protected internal void Initialize()
         {
             logger = LoggerFactory.GetLogger<TCPClient<TPacket>>();
+            sendLock = new ManualResetEvent(true);
+
             InvokeOnConnected();
-            BeginReceiveHeader();
+            BeginReceiveEvent();
         }
 
-        private void BeginReceiveHeader()
+        #region Receive Callbacks
+        private void BeginReceiveEvent()
+        {
+            try
+            {
+                var holder = new EventHolder();
+                Socket.BeginReceive(holder.EventBuffer, 0, holder.EventBuffer.Length, SocketFlags.None, EndReceiveEvent, holder);
+            }
+            catch (Exception ex)
+            {
+                logger.LogFatal(ex);
+                InvokeOnClientError("BeginReceiveEvent", ex);
+
+                Disconnect(DisconnectReason.Error);
+            }
+        }
+
+        private void EndReceiveEvent(IAsyncResult ar)
+        {
+            try
+            {
+                EventHolder holder = (EventHolder)ar.AsyncState;
+                int received = Socket.EndReceive(ar);
+
+                logger.LogDebug("ER:{0} L:{1} R:{2} B:{3}", holder.EventHandled, holder.EventBuffer.Length, received, BitConverter.ToString(holder.EventBuffer, 0, holder.EventHandled + received));
+                
+                if (received == 0)
+                {
+                    Disconnect(DisconnectReason.ServerShutdown);
+                }
+                else
+                {
+                    holder.EventHandled += received;
+                    if (holder.EventHandled < holder.EventBuffer.Length)
+                    {
+                        Socket.BeginReceive(holder.EventBuffer, holder.EventHandled, holder.EventBuffer.Length - holder.EventHandled, SocketFlags.None, EndReceiveEvent, holder);
+                    }
+                    else
+                    {
+                        switch (holder.Event)
+                        {
+                            case PacketEvent.Ping:
+                            case PacketEvent.Pong:
+                            case PacketEvent.Receive:
+                                BeginReceiveHeader(holder.Event);
+                                break;
+                            case PacketEvent.ServerShutdown:
+                                Disconnect(DisconnectReason.ServerShutdown);
+                                break;
+                            case PacketEvent.MaximumClientsReached:
+                                Disconnect(DisconnectReason.MaximumClientsReached);
+                                break;
+                            case PacketEvent.Unknown:
+                            default:
+                                Disconnect(DisconnectReason.UnknownEvent);
+                                break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogFatal(ex);
+                InvokeOnClientError("EndReceiveEvent", ex);
+
+                Disconnect(DisconnectReason.Error);
+            }
+        }
+
+        private void BeginReceiveHeader(PacketEvent packetEvent)
         {
             try
             {
                 var holder = new PacketHolder();
+                holder.Event = packetEvent;
+
                 Socket.BeginReceive(holder.Header, 0, holder.Header.Length, SocketFlags.None, EndReceiveHeader, holder);
             }
             catch (Exception ex)
@@ -192,8 +304,7 @@ namespace GFramework.Network
                 logger.LogFatal(ex);
                 InvokeOnClientError("BeginReceiveHeader", ex);
 
-                if(DisconnectOnError)
-                    Disconnect(DisconnectReason.Error);
+                Disconnect(DisconnectReason.Error);
             }
         }
 
@@ -204,36 +315,33 @@ namespace GFramework.Network
                 var holder = (PacketHolder)ar.AsyncState;
                 var received = Socket.EndReceive(ar);
 
-                //logger.LogInfo("C:{0} R:{1} L:{2} HR:{3}", holder.HeaderHandled, received, holder.Header.Length, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + received));
+                logger.LogDebug("HR:{0} L:{1} R:{2} B:{3}", holder.HeaderHandled, holder.Header.Length, received, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + received));
                 holder.HeaderHandled += received;
 
-                if (holder.HeaderHandled < holder.Header.Length)
+                if (received == 0)
                 {
-                    Socket.BeginReceive(holder.Header, holder.HeaderHandled, holder.Header.Length - holder.HeaderHandled, SocketFlags.None, EndReceiveHeader, holder);
+                    Disconnect(DisconnectReason.ServerShutdown);
                 }
                 else
                 {
-                    switch (holder.Event)
+                    if (holder.HeaderHandled < holder.Header.Length)
                     {
-                        case PacketEvent.Receive:
-                            if(holder.Length > 0)
-                                BeginReceiveBuffer(holder);
-                            else
-                            {
-                                var packet = (BasePacket)Activator.CreateInstance(typeof(TPacket), holder.ID);
+                        Socket.BeginReceive(holder.Header, holder.HeaderHandled, holder.Header.Length - holder.HeaderHandled, SocketFlags.None, EndReceiveHeader, holder);
+                    }
+                    else
+                    {
+                        if (holder.Length > 0)
+                        {
+                            holder.Buffer = new byte[holder.Length];
+                            BeginReceiveBuffer(holder);
+                        }
+                        else
+                        {
+                            var packet = CreatePacket(holder.ID);
 
-                                InvokeOnPacketReceived(packet);
-                                BeginReceiveHeader();
-                            }
-                            break;
-                        case PacketEvent.Ping:
-                            break;
-                        case PacketEvent.ServerShutdown:
-                            Disconnect(DisconnectReason.ServerShutdown);
-                            break;
-                        case PacketEvent.Unknown:
-                            Disconnect(DisconnectReason.Error);
-                            break;
+                            InvokeOnPacketReceived(packet);
+                            BeginReceiveEvent();
+                        }
                     }
                 }
             }
@@ -242,8 +350,7 @@ namespace GFramework.Network
                 logger.LogFatal(ex);
                 InvokeOnClientError("EndReceiveHeader", ex);
 
-                if (DisconnectOnError)
-                    Disconnect(DisconnectReason.Error);
+                Disconnect(DisconnectReason.Error);
             }
         }
 
@@ -251,26 +358,45 @@ namespace GFramework.Network
         {
             try
             {
-                holder.Buffer = new byte[holder.Length];
-                Socket.BeginReceive(holder.Chunk, 0, Constants.PacketChunkLength, SocketFlags.None, EndReceiveBuffer, holder);
+                long length = holder.Length - holder.ChunkHandled;
+                if (length >= Constants.PacketChunkLength)
+                    length = Constants.PacketChunkLength;
+
+                holder.Chunk = new byte[length];
+
+                BeginReceiveChunk(holder);
             }
             catch (Exception ex)
             {
                 logger.LogFatal(ex);
                 InvokeOnClientError("BeginReceiveBuffer", ex);
 
-                if (DisconnectOnError)
-                    Disconnect(DisconnectReason.Error);
+                Disconnect(DisconnectReason.Error);
             }
         }
 
-        private void EndReceiveBuffer(IAsyncResult ar)
+        private void BeginReceiveChunk(PacketHolder holder)
+        {
+            try
+            {
+                Socket.BeginReceive(holder.Chunk, holder.ChunkHandled, holder.Chunk.Length - holder.ChunkHandled, SocketFlags.None, EndReceiveChunk, holder);
+            }
+            catch(Exception ex)
+            {
+                logger.LogFatal(ex);
+                InvokeOnClientError("BeginReceiveChunk", ex);
+
+                Disconnect(DisconnectReason.Error);
+            }
+        }
+
+        private void EndReceiveChunk(IAsyncResult ar)
         {
             try
             {
                 var holder = (PacketHolder)ar.AsyncState;
                 var received = Socket.EndReceive(ar);
-                //logger.LogInfo("C:{0} R:{1} L:{2} BR:{3}", holder.BufferHandled, received, holder.Length, BitConverter.ToString(holder.Buffer, 0, holder.BufferHandled + received));
+                logger.LogDebug("BC:{0} L:{1} R:{2} B:{3}", holder.ChunkHandled, holder.Chunk.Length, received, BitConverter.ToString(holder.Chunk, 0, holder.ChunkHandled + received));
 
                 if (received == 0)
                 {
@@ -280,91 +406,270 @@ namespace GFramework.Network
                 {
                     Buffer.BlockCopy(holder.Chunk, 0, holder.Buffer, holder.BufferHandled, received);
 
-                    holder.BufferHandled += received;
-                    if (holder.BufferHandled < holder.Length)
+                    holder.ChunkHandled += received;
+                    if (holder.ChunkHandled < holder.Chunk.Length)
                     {
-                        Socket.BeginReceive(holder.Chunk, 0, Constants.PacketChunkLength, SocketFlags.None, EndReceiveBuffer, holder);
+                        Socket.BeginReceive(holder.Chunk, holder.ChunkHandled, holder.Chunk.Length - holder.ChunkHandled, SocketFlags.None, EndReceiveChunk, holder);
                     }
                     else
                     {
-                        var packet = (BasePacket)Activator.CreateInstance(typeof(TPacket), holder.ID, holder.Buffer);
+                        logger.LogDebug("BR:{0} L:{1} R:{2} B:{3}", holder.BufferHandled, holder.Length, received, BitConverter.ToString(holder.Buffer, 0, holder.BufferHandled + received));
 
-                        InvokeOnPacketReceived(packet);
-                        BeginReceiveHeader();
+                        Buffer.BlockCopy(holder.Chunk, 0, holder.Buffer, holder.BufferHandled, holder.Chunk.Length);
+                        holder.BufferHandled += holder.ChunkHandled;
+
+                        if (holder.BufferHandled < holder.Length)
+                        {
+                            BeginReceiveBuffer(holder);
+                        }
+                        else
+                        {
+                            var packet = (TPacket)Activator.CreateInstance(typeof(TPacket), holder.ID, holder.Buffer);
+
+                            switch(holder.Event)
+                            {
+                                case PacketEvent.Receive:
+                                    InvokeOnPacketReceived(packet);
+                                    break;
+                                case PacketEvent.Ping:
+                                    {
+                                        var sendAt = packet.ReadDateTime();
+                                        InvokeOnPingReceived(sendAt);
+
+                                        packet.Clear();
+                                        packet.WriteDateTime(sendAt);
+                                        packet.WriteDateTime(DateTime.Now);
+
+                                        BeginSendEvent(PacketEvent.Pong, packet);
+                                    }
+                                    break;
+                                case PacketEvent.Pong:
+                                    {
+                                        var sentAt = packet.ReadDateTime();
+                                        var receivedAt = packet.ReadDateTime();
+
+                                        InvokeOnPongReceived(sentAt, receivedAt);
+                                    }
+                                    break;
+                                default:
+                                    throw new InvalidOperationException("Invalid PacketEvent handled!");
+                            }
+                            BeginReceiveEvent();
+                        }
                     }
                 }
+            }
+            catch (SocketException ex)
+            {
+                logger.LogFatal(ex);
+                InvokeOnClientError("EndReceiveBuffer", ex);
+
+                Disconnect(DisconnectReason.Error);
             }
             catch (Exception ex)
             {
                 logger.LogFatal(ex);
                 InvokeOnClientError("EndReceiveBuffer", ex);
 
-                if (DisconnectOnError)
-                    Disconnect(DisconnectReason.Error);
+                BeginReceiveEvent();
+            }
+        }
+        #endregion
+
+        #region Send Callbacks
+        private void BeginSendEvent(PacketEvent packetEvent, TPacket packet = null)
+        {
+            try
+            {
+                sendLock.WaitOne();
+
+                var holder = new EventHolder(packetEvent);
+                holder.Packet = packet;
+
+                Socket.BeginSend(holder.EventBuffer, 0, holder.EventBuffer.Length, SocketFlags.None, EndSendEvent, holder);
+            }
+            catch (Exception ex)
+            {
+                logger.LogFatal(ex);
+                InvokeOnClientError("BeginSendEvent", ex);
+            }
+        }
+
+        private void EndSendEvent(IAsyncResult ar)
+        {
+            try
+            {
+                var holder = (EventHolder)ar.AsyncState;
+                var sent = Socket.EndSend(ar);
+
+                logger.LogDebug("ES:{0} L:{1} R:{2} B:{3}", holder.EventHandled, holder.EventBuffer.Length, sent, BitConverter.ToString(holder.EventBuffer, 0, holder.EventHandled + sent));
+
+                holder.EventHandled += sent;
+                if (holder.EventHandled < holder.EventBuffer.Length)
+                {
+                    Socket.BeginSend(holder.EventBuffer, holder.EventHandled, holder.EventHandled - holder.EventHandled, SocketFlags.None, EndSendEvent, holder);
+                }
+                else if(holder.Packet != null)
+                {
+                    var packetHolder = new PacketHolder(holder.Packet);
+                    packetHolder.Event = holder.Event;
+
+                    BeginSendHeader(packetHolder);
+                }
+                else
+                {
+                    sendLock.Set();
+                }
+            }
+            catch (Exception ex)
+            {
+                sendLock.Set();
+
+                logger.LogFatal(ex);
+                InvokeOnClientError("EndSendEvent", ex);
             }
         }
 
         private void BeginSendHeader(PacketHolder holder)
         {
-            Socket.BeginSend(holder.Header, 0, holder.Header.Length, SocketFlags.None, EndSendHeader, holder);
+            try
+            {
+                Socket.BeginSend(holder.Header, 0, holder.Header.Length, SocketFlags.None, EndSendHeader, holder);
+            }
+            catch (Exception ex)
+            {
+                sendLock.Set();
+
+                logger.LogFatal(ex);
+                InvokeOnClientError("BeginSendHeader", ex);
+            }
         }
 
         private void EndSendHeader(IAsyncResult ar)
         {
-            PacketHolder holder = (PacketHolder)ar.AsyncState;
-            var sent = Socket.EndSend(ar);
-            //logger.LogInfo("C:{0} S:{1} L:{2} HS:{3}", holder.HeaderHandled, sent, holder.Header.Length, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + sent));
+            try
+            {
+                PacketHolder holder = (PacketHolder)ar.AsyncState;
+                var sent = Socket.EndSend(ar);
 
-            holder.HeaderHandled += sent;
-            if (holder.HeaderHandled < holder.Header.Length)
-            {
-                Socket.BeginSend(holder.Header, holder.HeaderHandled, holder.Header.Length - holder.HeaderHandled, SocketFlags.None, EndSendHeader, holder);
+                logger.LogDebug("HS:{0} L:{1} R:{2} B:{3}", holder.HeaderHandled, holder.Header.Length, sent, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + sent));
+                holder.HeaderHandled += sent;
+                if (holder.HeaderHandled < holder.Header.Length)
+                {
+                    Socket.BeginSend(holder.Header, holder.HeaderHandled, holder.Header.Length - holder.HeaderHandled, SocketFlags.None, EndSendHeader, holder);
+                }
+                else if (holder.Length == 0)
+                {
+                    sendLock.Set();
+                    InvokeOnPacketSent((TPacket)holder.Packet);
+                }
+                else
+                {
+                    BeginSendBuffer(holder);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                BeginSendBuffer(holder);
+                sendLock.Set();
+
+                logger.LogFatal(ex);
+                InvokeOnClientError("EndSendHeader", ex);
             }
         }
 
         private void BeginSendBuffer(PacketHolder holder)
         {
-            long length = holder.Length - holder.ChunkHandled;
-            if (length >= Constants.PacketChunkLength)
-                length = Constants.PacketChunkLength;
+            try
+            {
+                long length = holder.Length - holder.ChunkHandled;
+                if (length >= Constants.PacketChunkLength)
+                    length = Constants.PacketChunkLength;
 
-            holder.Chunk = new byte[length];
-            Buffer.BlockCopy(holder.Buffer, holder.BufferHandled, holder.Chunk, 0, Convert.ToInt32(length));
+                holder.Chunk = new byte[length];
+                Buffer.BlockCopy(holder.Buffer, holder.BufferHandled, holder.Chunk, 0, Convert.ToInt32(length));
 
-            BeginSendChunk(holder);
+                BeginSendChunk(holder);
+            }
+            catch (Exception ex)
+            {
+                sendLock.Set();
+
+                logger.LogFatal(ex);
+                InvokeOnClientError("BeginSendBuffer", ex);
+            }
         }
 
         private void BeginSendChunk(PacketHolder holder)
         {
-            Socket.BeginSend(holder.Chunk, holder.ChunkHandled, holder.Chunk.Length - holder.ChunkHandled, SocketFlags.None, EndSendChunk, holder);
+            try
+            {
+                Socket.BeginSend(holder.Chunk, holder.ChunkHandled, holder.Chunk.Length - holder.ChunkHandled, SocketFlags.None, EndSendChunk, holder);
+            }
+            catch (Exception ex)
+            {
+                sendLock.Set();
+
+                logger.LogFatal(ex);
+                InvokeOnClientError("BeginSendEvent", ex);
+            }
         }
 
         private void EndSendChunk(IAsyncResult ar)
         {
-            PacketHolder holder = (PacketHolder)ar.AsyncState;
-            var sent = Socket.EndSend(ar);
+            try
+            {
+                PacketHolder holder = (PacketHolder)ar.AsyncState;
+                var sent = Socket.EndSend(ar);
 
-            holder.ChunkHandled += sent;
-            if(holder.ChunkHandled < holder.Chunk.Length)
-            {
-                BeginSendChunk(holder);
-            }
-            else
-            {
-                holder.BufferHandled += holder.ChunkHandled;
-                if(holder.BufferHandled < holder.Length)
+                logger.LogDebug("CS:{0} L:{1} R:{2} B:{3}", holder.ChunkHandled, holder.Chunk.Length, sent, BitConverter.ToString(holder.Chunk, 0, holder.ChunkHandled + sent));
+                holder.ChunkHandled += sent;
+                if (holder.ChunkHandled < holder.Chunk.Length)
                 {
-                    BeginSendBuffer(holder);
+                    BeginSendChunk(holder);
                 }
                 else
                 {
-                    InvokeOnPacketSent(holder.Packet);
+                    logger.LogDebug("BS:{0} L:{1} R:{2} B:{3}", holder.BufferHandled, holder.Buffer.Length, holder.ChunkHandled, BitConverter.ToString(holder.Buffer, 0, holder.BufferHandled + holder.ChunkHandled));
+
+                    holder.BufferHandled += holder.ChunkHandled;
+                    if (holder.BufferHandled < holder.Length)
+                    {
+                        BeginSendBuffer(holder);
+                    }
+                    else
+                    {
+                        sendLock.Set();
+
+                        if (holder.Event == PacketEvent.Receive)
+                        {
+                            InvokeOnPacketSent((TPacket)holder.Packet);
+                        }
+                        else if(holder.Event == PacketEvent.Ping)
+                        {
+                            holder.Packet.Reset();
+                            var sentAt = holder.Packet.ReadDateTime();
+
+                            InvokeOnPingSent(sentAt);
+                        }
+                        else if (holder.Event == PacketEvent.Pong)
+                        {
+                            holder.Packet.Reset();
+                            var sentAt = holder.Packet.ReadDateTime();
+                            var receivedAt = holder.Packet.ReadDateTime();
+
+                            InvokeOnPongSent(sentAt, receivedAt);
+                        }
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                sendLock.Set();
+
+                logger.LogFatal(ex);
+                InvokeOnClientError("EndSendChunk", ex);
+            }
         }
+    #endregion
     }
 }

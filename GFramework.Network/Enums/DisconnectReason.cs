@@ -13,5 +13,6 @@ namespace GFramework.Network.Enums
         MaximumClientsReached,
         ConnectionFailed,
         Error,
+        UnknownEvent,
     }
 }

@@ -135,6 +135,8 @@ namespace GFramework.Network.Packets
             return BitConverter.ToUInt16(buffer, 0);
         }
 
+        public override DateTime ReadDateTime() => new DateTime(ReadLong());
+
         public override void WriteBoolean(bool data)
         {
             WriteBytes(BitConverter.GetBytes(data));
@@ -208,5 +210,7 @@ namespace GFramework.Network.Packets
         {
             WriteBytes(BitConverter.GetBytes(data));
         }
+
+        public override void WriteDateTime(DateTime data) => WriteLong(data.Ticks);
     }
 }

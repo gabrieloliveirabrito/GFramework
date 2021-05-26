@@ -23,7 +23,29 @@ namespace Example
             log.LogDebug("Debug message");
             log.LogFatal(new Exception("Fatal message"));
 
-            if (Console.ReadKey().Key == ConsoleKey.S)
+            bool serve;
+            while (true)
+            {
+                log.LogInfo("Enter S to server, or C for client: ");
+                var line = Console.ReadLine().ToLowerInvariant();
+
+                if(line == "c")
+                {
+                    serve = false;
+                    break;
+                }
+                else if(line == "s")
+                {
+                    serve = true;
+                    break;
+                }
+                else
+                {
+                    log.LogWarning("Invalid operation!");
+                }
+            }
+
+            if (serve)
             {
                 ChatServer server = new ChatServer();
 
@@ -41,7 +63,10 @@ namespace Example
 
                 string line;
                 while ((line = Console.ReadLine()) != "")
-                    client.SendMessage(line);
+                    if (line.ToLowerInvariant() == "ping")
+                        client.Ping();
+                    else
+                        client.SendMessage(line);
             }
 
             log.LogWarning("Press Enter to exit...");

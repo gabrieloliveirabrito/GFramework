@@ -13,9 +13,9 @@ namespace GFramework.Network.EventArgs.Client
         where TClient : IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
-        public BasePacket Packet { get; private set; }
+        public TPacket Packet { get; private set; }
 
-        public PacketReceivedEventArgs(TClient client, BasePacket packet) : base(client)
+        public PacketReceivedEventArgs(TClient client, TPacket packet) : base(client)
         {
             Packet = packet;
         }

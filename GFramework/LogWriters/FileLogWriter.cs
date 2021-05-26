@@ -27,7 +27,7 @@ namespace GFramework.LogWriters
             string dirPath = Path.GetDirectoryName(filePath);
 
             if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
-            File.AppendAllText(filePath, $"{log.Time} - {log.Type.ToString().ToUpperInvariant()} - {log.Name}: {log.Message}");
+            File.AppendAllText(filePath, $"{log.Time} - {log.Type.ToString().ToUpperInvariant()} - {log.Name}: {log.Message}" + Environment.NewLine);
         }
     }
 }

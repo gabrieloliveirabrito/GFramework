@@ -31,10 +31,15 @@ namespace Example
 
         public void SendMessage(string message)
         {
-            var packet = server.CreatePacket(ulong.MaxValue);
-            packet.WriteString(message);
+            if (server.Clients.Length == 0)
+                logger.LogWarning("No clients connected!");
+            else
+            {
+                var packet = server.CreatePacket(ulong.MaxValue);
+                packet.WriteString(message);
 
-            server.SendToAll(packet);
+                server.SendToAll(packet);
+            }
         }
 
         private void Server_OnServerOpened(object sender, ServerOpenedEventArgs<TCPServer<StreamPacketReader>, TCPClient<StreamPacketReader>, StreamPacketReader> e)
@@ -54,6 +59,10 @@ namespace Example
             e.Client.OnPacketReceived += Client_OnPacketReceived;
             e.Client.OnPacketSent += Client_OnPacketSent;
             e.Client.OnDisconnected += Client_OnDisconnected;
+            e.Client.OnPingSent += Client_OnPingSent;
+            e.Client.OnPingReceived += Client_OnPingReceived;
+            e.Client.OnPongSent += Client_OnPongSent;
+            e.Client.OnPongReceived += Client_OnPongReceived;
 
             SendMessage($"Client {e.Client.EndPoint} connected!");
         }
@@ -77,6 +86,27 @@ namespace Example
             }
             else
                 logger.LogWarning("Unknown packet!");
+        }
+
+        private void Client_OnPingSent(object sender, PingSentEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            logger.LogInfo("Ping request has been sent at {0}", e.SentAt);
+        }
+
+        private void Client_OnPingReceived(object sender, PingReceivedEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            logger.LogInfo("Ping request has been received at {0}", e.SentAt);
+        }
+
+        private void Client_OnPongSent(object sender, PongSentEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            logger.LogInfo("Pong request has been sent at {0}, sent at {1}, delay = {2}ms", e.SentAt, e.ReceivedAt, e.Ping);
+        }
+
+        private void Client_OnPongReceived(object sender, PongReceivedEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            Console.Title = $"Example - Ping {e.Ping}ms";
+            logger.LogInfo("Pong request has been received at {0}, sent at {1}, delay = {2}ms", e.SentAt, e.ReceivedAt, e.Ping);
         }
 
         private void Client_OnDisconnected(object sender, ClientDisconnectedEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)

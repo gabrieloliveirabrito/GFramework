@@ -41,6 +41,7 @@ namespace GFramework.Network.Bases
         public abstract double ReadDouble();
         public abstract bool ReadBoolean();
         public abstract string ReadString();
+        public abstract DateTime ReadDateTime();
 
         public abstract void WriteByte(byte data);
         public abstract void WriteBytes(byte[] data);
@@ -55,5 +56,6 @@ namespace GFramework.Network.Bases
         public abstract void WriteDouble(double data);
         public abstract void WriteBoolean(bool data);
         public abstract void WriteString(string data);
+        public abstract void WriteDateTime(DateTime data);
     }
 }

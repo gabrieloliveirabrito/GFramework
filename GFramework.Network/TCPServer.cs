@@ -144,35 +144,6 @@ namespace GFramework.Network
                 OnClientConnected(this, new ClientConnectedEventArgs<TCPServer<TPacket>, TCPClient<TPacket>, TPacket>(this, client));
         }
 
-        private void BeginAccept()
-        {
-            Socket.BeginAccept(EndAccept, null);
-        }
-
-        private void EndAccept(IAsyncResult result)
-        {
-            try
-            {
-                Socket socket = Socket.EndAccept(result);
-
-                //TODO: Disconnect by Maximum Clients
-
-                TCPClient<TPacket> client = new TCPClient<TPacket>(socket);
-                clients.Add(client);
-                InvokeOnClientConnected(client);
-
-                client.OnDisconnected += Client_OnDisconnected;
-                client.Initialize();
-
-                BeginAccept();
-            }
-            catch(Exception ex)
-            {
-                logger.LogFatal(ex);
-                InvokeOnServerError("EndAccept", ex);
-            }
-        }
-
         private void Client_OnDisconnected(object sender, ClientDisconnectedEventArgs<TCPClient<TPacket>, TPacket> e)
         {
             if (e.Reason != DisconnectReason.ServerShutdown)
@@ -184,7 +155,7 @@ namespace GFramework.Network
             return (TPacket)Activator.CreateInstance(typeof(TPacket), id);
         }
 
-        public void SendToAll(BasePacket packet)
+        public void SendToAll(TPacket packet)
         {
             try
             {
@@ -209,6 +180,35 @@ namespace GFramework.Network
             {
                 logger.LogFatal(ex);
                 InvokeOnServerError("DisconnectAll", ex);
+            }
+        }
+
+        private void BeginAccept()
+        {
+            Socket.BeginAccept(EndAccept, null);
+        }
+
+        private void EndAccept(IAsyncResult result)
+        {
+            try
+            {
+                Socket socket = Socket.EndAccept(result);
+
+                //TODO: Disconnect by Maximum Clients
+
+                TCPClient<TPacket> client = new TCPClient<TPacket>(socket);
+                clients.Add(client);
+                client.Initialize();
+
+                InvokeOnClientConnected(client);
+                client.OnDisconnected += Client_OnDisconnected;
+
+                BeginAccept();
+            }
+            catch (Exception ex)
+            {
+                logger.LogFatal(ex);
+                InvokeOnServerError("EndAccept", ex);
             }
         }
     }

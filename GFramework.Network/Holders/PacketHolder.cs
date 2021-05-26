@@ -27,21 +27,20 @@ namespace GFramework.Network.Holders
             var lengthBuffer = BitConverter.GetBytes(packet.Length);
             var idBuffer = BitConverter.GetBytes(packet.ID);
 
-            Header[0] = (byte)PacketEvent.Receive;
-            System.Buffer.BlockCopy(lengthBuffer, 0, Header, 1, lengthBuffer.Length);
-            System.Buffer.BlockCopy(idBuffer, 0, Header, 1 + lengthBuffer.Length, idBuffer.Length);
+            System.Buffer.BlockCopy(lengthBuffer, 0, Header, 0, lengthBuffer.Length);
+            System.Buffer.BlockCopy(idBuffer, 0, Header, lengthBuffer.Length, idBuffer.Length);
 
             Buffer = packet.Data;
         }
 
         public BasePacket Packet { get; set; }
+        public PacketEvent Event { get; set; }
 
         public byte[] Header { get; set; }
         public int HeaderHandled { get; set; }
 
-        public PacketEvent Event => (PacketEvent)Header[0];
-        public long Length => BitConverter.ToInt64(Header, 1);
-        public ulong ID => BitConverter.ToUInt64(Header, 1 + sizeof(long));
+        public long Length => BitConverter.ToInt64(Header, 0);
+        public ulong ID => BitConverter.ToUInt64(Header, sizeof(long));
 
         public byte[] Chunk { get; set; }
         public int ChunkHandled { get; set; }

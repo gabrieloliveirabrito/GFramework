@@ -52,11 +52,17 @@
     <Compile Include="EventArgs\Client\ClientErrorEventArgs.cs" />
     <Compile Include="EventArgs\Client\PacketReceivedEventArgs.cs" />
     <Compile Include="EventArgs\Client\PacketSentEventArgs.cs" />
+    <Compile Include="EventArgs\Client\PingReceivedEventArgs.cs" />
+    <Compile Include="EventArgs\Client\PingSentEventArgs.cs" />
+    <Compile Include="EventArgs\Client\PongReceivedEventArgs.cs" />
+    <Compile Include="EventArgs\Client\PongSentEventArgs.cs" />
     <Compile Include="EventArgs\Server\ClientConnectedEventArgs.cs" />
     <Compile Include="EventArgs\Server\ServerErrorEventArgs.cs" />
     <Compile Include="EventArgs\Server\ServerOpenedEventArgs.cs" />
     <Compile Include="EventArgs\Server\ServerClosedEventArgs.cs" />
+    <Compile Include="Holders\EventHolder.cs" />
     <Compile Include="Holders\PacketHolder.cs" />
+    <Compile Include="Holders\PingHolder.cs" />
     <Compile Include="Interfaces\IClient.cs" />
     <Compile Include="Interfaces\IServer.cs" />
     <Compile Include="Packets\BitPacketReader.cs" />

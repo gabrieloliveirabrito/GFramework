@@ -25,15 +25,42 @@ namespace Example
             client = new TCPClient<StreamPacketReader>(IPAddress.Parse("127.0.0.1"), 3210);
 
             client.OnConnected += Client_OnConnected;
-            client.OnPacketReceived += Client_OnPacketReceived;
-            client.OnPacketSent += Client_OnPacketSent;
             client.OnDisconnected += Client_OnDisconnected;
             client.OnClientError += Client_OnClientError;
+            client.OnPacketReceived += Client_OnPacketReceived;
+            client.OnPacketSent += Client_OnPacketSent;
+            client.OnPingSent += Client_OnPingSent;
+            client.OnPingReceived += Client_OnPingReceived;
+            client.OnPongSent += Client_OnPongSent;
+            client.OnPongReceived += Client_OnPongReceived;
 
             if (client.Connect())
                 logger.LogSuccess("Connect request has been sent! Response on event!");
             else
                 logger.LogError("Failed to sent connect request!");
+        }
+
+        public void Ping() => client.Ping();
+
+        private void Client_OnPingSent(object sender, PingSentEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            logger.LogInfo("Ping request has been sent at {0}", e.SentAt);
+        }
+
+        private void Client_OnPingReceived(object sender, PingReceivedEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            logger.LogInfo("Ping request has been received at {0}", e.SentAt);
+        }
+
+        private void Client_OnPongSent(object sender, PongSentEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            logger.LogInfo("Pong request has been received at {0}, sent at {1}, delay = {2}ms", e.SentAt, e.ReceivedAt, e.Ping);
+        }
+
+        private void Client_OnPongReceived(object sender, PongReceivedEventArgs<TCPClient<StreamPacketReader>, StreamPacketReader> e)
+        {
+            Console.Title = $"Example - Ping {e.Ping}ms";
+            logger.LogInfo("Pong request has been received at {0}, sent at {1}, delay = {2}ms", e.SentAt, e.ReceivedAt, e.Ping);
         }
 
         public void SendMessage(string message)
