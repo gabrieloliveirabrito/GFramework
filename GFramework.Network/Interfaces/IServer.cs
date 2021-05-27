@@ -12,12 +12,13 @@ namespace GFramework.Network.Interfaces
 
     public interface IServer<TServer, TClient, TPacket>
         where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
         IPEndPoint EndPoint { get; set; }
         bool Listening { get; }
         TClient[] Clients { get; }
+        uint MaximumClients { get; set; }
 
         event EventHandler<ServerOpenedEventArgs<TServer, TClient, TPacket>> OnServerOpened;
         event EventHandler<ServerClosedEventArgs<TServer, TClient, TPacket>> OnServerClosed;

@@ -55,7 +55,17 @@ namespace GFramework.Network
             get => clients.ToArray(); 
         }
 
-        public bool CloseOnError { get; set; }
+        private uint maximumClients = Constants.MaximumActiveConnections;
+        public uint MaximumClients
+        {
+            get => maximumClients;
+            set
+            {
+                if (Listening)
+                    throw new InvalidOperationException("Cannot change the EndPoint of server while is listening.");
+                maximumClients = value;
+            }
+        }
 
         public TCPServer(int port) : this(IPAddress.Any, port)
         {
@@ -69,8 +79,6 @@ namespace GFramework.Network
 
         public TCPServer(IPEndPoint endpoint)
         {
-            CloseOnError = false;
-
             logger = LoggerFactory.GetLogger(this);
             clients = new List<TCPClient<TPacket>>();
             endPoint = endpoint;
@@ -193,16 +201,21 @@ namespace GFramework.Network
             try
             {
                 Socket socket = Socket.EndAccept(result);
-
-                //TODO: Disconnect by Maximum Clients
-
                 TCPClient<TPacket> client = new TCPClient<TPacket>(socket);
-                clients.Add(client);
-                client.Initialize();
 
-                InvokeOnClientConnected(client);
-                client.OnDisconnected += Client_OnDisconnected;
+                if (clients.Count + 1 > MaximumClients)
+                {
+                    client.Disconnect(DisconnectReason.MaximumClientsReached, true);
+                }
+                else
+                {
+                    clients.Add(client);
+                    client.Initialize();
 
+                    InvokeOnClientConnected(client);
+                    client.OnDisconnected += Client_OnDisconnected;
+
+                }
                 BeginAccept();
             }
             catch (Exception ex)

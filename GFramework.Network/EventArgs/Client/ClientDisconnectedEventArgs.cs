@@ -11,7 +11,7 @@ namespace GFramework.Network.EventArgs.Client
     using Interfaces;
 
     public class ClientDisconnectedEventArgs<TClient, TPacket> : BaseClientEventArgs<TClient, TPacket>
-        where TClient : IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
         public DisconnectReason Reason { get; private set; }

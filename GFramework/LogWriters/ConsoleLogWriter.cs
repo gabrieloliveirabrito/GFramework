@@ -8,10 +8,11 @@ namespace GFramework.LogWriters
 {
     using Bases;
     using Enums;
+    using Holders;
 
     public class ConsoleLogWriter : BaseLogWriter
     {
-        public override void Write(BaseLog log)
+        public override void Write(LogHolder log)
         {
             Console.ResetColor();
             Console.Write("{0} - ", log.Time);

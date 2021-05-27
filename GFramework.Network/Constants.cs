@@ -10,6 +10,7 @@ namespace GFramework.Network
     {
         public const int MaxPacketLength = 1024 * 100;
         public const int MaxIncomingConnections = 128;
+        public const uint MaximumActiveConnections = 10000;
         public const int PacketHeaderSize = 1 + sizeof(long) + sizeof(ulong);
         public const int PacketChunkLength = 1024 * 50;
         public const int PingPacketSize = 1 + sizeof(long);

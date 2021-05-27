@@ -56,6 +56,8 @@ namespace GFramework.Network
             get => Socket != null && Socket.Connected;
         }
 
+        public bool DebugPackets { get; set; }
+
         public TCPClient(IPAddress address, int port) : this(new IPEndPoint(address, port))
         {
 
@@ -64,12 +66,15 @@ namespace GFramework.Network
         public TCPClient(IPEndPoint endpoint)
         {
             logger = LoggerFactory.GetLogger(this);
+            sendLock = new ManualResetEvent(true);
             endPoint = endpoint;
         }
 
         protected internal TCPClient(Socket socket)
         {
             logger = LoggerFactory.GetLogger(this);
+            sendLock = new ManualResetEvent(true);
+
             EndPoint = (IPEndPoint)socket.RemoteEndPoint;
             Socket = socket;
         }
@@ -178,15 +183,21 @@ namespace GFramework.Network
             BeginSendEvent(PacketEvent.Receive, packet);
         }
 
-        protected internal bool Disconnect(DisconnectReason reason)
+        protected internal bool Disconnect(DisconnectReason reason, bool notify = false)
         {
             try
             {
                 InvokeOnDisconnected(reason);
 
-                Socket.Shutdown(SocketShutdown.Both);
-                Socket.Disconnect(false);
-
+                if (reason == DisconnectReason.MaximumClientsReached && notify)
+                {
+                    BeginSendEvent(PacketEvent.MaximumClientsReached);
+                }
+                else
+                {
+                    Socket.Shutdown(SocketShutdown.Both);
+                    Socket.Disconnect(false);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -214,9 +225,6 @@ namespace GFramework.Network
 
         protected internal void Initialize()
         {
-            logger = LoggerFactory.GetLogger<TCPClient<TPacket>>();
-            sendLock = new ManualResetEvent(true);
-
             InvokeOnConnected();
             BeginReceiveEvent();
         }
@@ -245,8 +253,9 @@ namespace GFramework.Network
                 EventHolder holder = (EventHolder)ar.AsyncState;
                 int received = Socket.EndReceive(ar);
 
-                logger.LogDebug("ER:{0} L:{1} R:{2} B:{3}", holder.EventHandled, holder.EventBuffer.Length, received, BitConverter.ToString(holder.EventBuffer, 0, holder.EventHandled + received));
-                
+                if (DebugPackets)
+                    logger.LogDebug("ER:{0} L:{1} R:{2} B:{3}", holder.EventHandled, holder.EventBuffer.Length, received, BitConverter.ToString(holder.EventBuffer, 0, holder.EventHandled + received));
+
                 if (received == 0)
                 {
                     Disconnect(DisconnectReason.ServerShutdown);
@@ -315,7 +324,8 @@ namespace GFramework.Network
                 var holder = (PacketHolder)ar.AsyncState;
                 var received = Socket.EndReceive(ar);
 
-                logger.LogDebug("HR:{0} L:{1} R:{2} B:{3}", holder.HeaderHandled, holder.Header.Length, received, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + received));
+                if (DebugPackets)
+                    logger.LogDebug("HR:{0} L:{1} R:{2} B:{3}", holder.HeaderHandled, holder.Header.Length, received, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + received));
                 holder.HeaderHandled += received;
 
                 if (received == 0)
@@ -381,7 +391,7 @@ namespace GFramework.Network
             {
                 Socket.BeginReceive(holder.Chunk, holder.ChunkHandled, holder.Chunk.Length - holder.ChunkHandled, SocketFlags.None, EndReceiveChunk, holder);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 logger.LogFatal(ex);
                 InvokeOnClientError("BeginReceiveChunk", ex);
@@ -396,7 +406,9 @@ namespace GFramework.Network
             {
                 var holder = (PacketHolder)ar.AsyncState;
                 var received = Socket.EndReceive(ar);
-                logger.LogDebug("BC:{0} L:{1} R:{2} B:{3}", holder.ChunkHandled, holder.Chunk.Length, received, BitConverter.ToString(holder.Chunk, 0, holder.ChunkHandled + received));
+
+                if (DebugPackets)
+                    logger.LogDebug("BC:{0} L:{1} R:{2} B:{3}", holder.ChunkHandled, holder.Chunk.Length, received, BitConverter.ToString(holder.Chunk, 0, holder.ChunkHandled + received));
 
                 if (received == 0)
                 {
@@ -413,7 +425,8 @@ namespace GFramework.Network
                     }
                     else
                     {
-                        logger.LogDebug("BR:{0} L:{1} R:{2} B:{3}", holder.BufferHandled, holder.Length, received, BitConverter.ToString(holder.Buffer, 0, holder.BufferHandled + received));
+                        if (DebugPackets)
+                            logger.LogDebug("BR:{0} L:{1} R:{2} B:{3}", holder.BufferHandled, holder.Length, received, BitConverter.ToString(holder.Buffer, 0, holder.BufferHandled + received));
 
                         Buffer.BlockCopy(holder.Chunk, 0, holder.Buffer, holder.BufferHandled, holder.Chunk.Length);
                         holder.BufferHandled += holder.ChunkHandled;
@@ -426,7 +439,7 @@ namespace GFramework.Network
                         {
                             var packet = (TPacket)Activator.CreateInstance(typeof(TPacket), holder.ID, holder.Buffer);
 
-                            switch(holder.Event)
+                            switch (holder.Event)
                             {
                                 case PacketEvent.Receive:
                                     InvokeOnPacketReceived(packet);
@@ -502,14 +515,15 @@ namespace GFramework.Network
                 var holder = (EventHolder)ar.AsyncState;
                 var sent = Socket.EndSend(ar);
 
-                logger.LogDebug("ES:{0} L:{1} R:{2} B:{3}", holder.EventHandled, holder.EventBuffer.Length, sent, BitConverter.ToString(holder.EventBuffer, 0, holder.EventHandled + sent));
+                if (DebugPackets)
+                    logger.LogDebug("ES:{0} L:{1} R:{2} B:{3}", holder.EventHandled, holder.EventBuffer.Length, sent, BitConverter.ToString(holder.EventBuffer, 0, holder.EventHandled + sent));
 
                 holder.EventHandled += sent;
                 if (holder.EventHandled < holder.EventBuffer.Length)
                 {
                     Socket.BeginSend(holder.EventBuffer, holder.EventHandled, holder.EventHandled - holder.EventHandled, SocketFlags.None, EndSendEvent, holder);
                 }
-                else if(holder.Packet != null)
+                else if (holder.Packet != null)
                 {
                     var packetHolder = new PacketHolder(holder.Packet);
                     packetHolder.Event = holder.Event;
@@ -518,6 +532,12 @@ namespace GFramework.Network
                 }
                 else
                 {
+                    if (holder.Event == PacketEvent.MaximumClientsReached)
+                    {
+                        Socket.Shutdown(SocketShutdown.Both);
+                        Socket.Disconnect(false);
+                    }
+
                     sendLock.Set();
                 }
             }
@@ -552,7 +572,8 @@ namespace GFramework.Network
                 PacketHolder holder = (PacketHolder)ar.AsyncState;
                 var sent = Socket.EndSend(ar);
 
-                logger.LogDebug("HS:{0} L:{1} R:{2} B:{3}", holder.HeaderHandled, holder.Header.Length, sent, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + sent));
+                if (DebugPackets)
+                    logger.LogDebug("HS:{0} L:{1} R:{2} B:{3}", holder.HeaderHandled, holder.Header.Length, sent, BitConverter.ToString(holder.Header, 0, holder.HeaderHandled + sent));
                 holder.HeaderHandled += sent;
                 if (holder.HeaderHandled < holder.Header.Length)
                 {
@@ -621,7 +642,8 @@ namespace GFramework.Network
                 PacketHolder holder = (PacketHolder)ar.AsyncState;
                 var sent = Socket.EndSend(ar);
 
-                logger.LogDebug("CS:{0} L:{1} R:{2} B:{3}", holder.ChunkHandled, holder.Chunk.Length, sent, BitConverter.ToString(holder.Chunk, 0, holder.ChunkHandled + sent));
+                if (DebugPackets)
+                    logger.LogDebug("CS:{0} L:{1} R:{2} B:{3}", holder.ChunkHandled, holder.Chunk.Length, sent, BitConverter.ToString(holder.Chunk, 0, holder.ChunkHandled + sent));
                 holder.ChunkHandled += sent;
                 if (holder.ChunkHandled < holder.Chunk.Length)
                 {
@@ -629,7 +651,8 @@ namespace GFramework.Network
                 }
                 else
                 {
-                    logger.LogDebug("BS:{0} L:{1} R:{2} B:{3}", holder.BufferHandled, holder.Buffer.Length, holder.ChunkHandled, BitConverter.ToString(holder.Buffer, 0, holder.BufferHandled + holder.ChunkHandled));
+                    if (DebugPackets)
+                        logger.LogDebug("BS:{0} L:{1} R:{2} B:{3}", holder.BufferHandled, holder.Buffer.Length, holder.ChunkHandled, BitConverter.ToString(holder.Buffer, 0, holder.BufferHandled + holder.ChunkHandled));
 
                     holder.BufferHandled += holder.ChunkHandled;
                     if (holder.BufferHandled < holder.Length)
@@ -644,7 +667,7 @@ namespace GFramework.Network
                         {
                             InvokeOnPacketSent((TPacket)holder.Packet);
                         }
-                        else if(holder.Event == PacketEvent.Ping)
+                        else if (holder.Event == PacketEvent.Ping)
                         {
                             holder.Packet.Reset();
                             var sentAt = holder.Packet.ReadDateTime();
@@ -670,6 +693,6 @@ namespace GFramework.Network
                 InvokeOnClientError("EndSendChunk", ex);
             }
         }
-    #endregion
+        #endregion
     }
 }

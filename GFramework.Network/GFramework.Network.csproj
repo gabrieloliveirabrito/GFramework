@@ -41,7 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bases\BaseClientWrapper.cs" />
     <Compile Include="Bases\BasePacket.cs" />
+    <Compile Include="Bases\BaseServerWrapper.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Enums\DisconnectReason.cs" />
     <Compile Include="Enums\PacketEvent.cs" />
@@ -64,9 +66,11 @@
     <Compile Include="Holders\PacketHolder.cs" />
     <Compile Include="Holders\PingHolder.cs" />
     <Compile Include="Interfaces\IClient.cs" />
+    <Compile Include="Bases\BasePacketReader.cs" />
+    <Compile Include="Bases\BasePacketWriter.cs" />
     <Compile Include="Interfaces\IServer.cs" />
-    <Compile Include="Packets\BitPacketReader.cs" />
-    <Compile Include="Packets\StreamPacketReader.cs" />
+    <Compile Include="Packets\BitPacket.cs" />
+    <Compile Include="Packets\StreamPacket.cs" />
     <Compile Include="TCPClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TCPServer.cs" />

@@ -11,6 +11,7 @@ namespace GFramework.LogWriters
 {
     using Bases;
     using Enums;
+    using Holders;
 
     public class FileLogWriter : BaseLogWriter
     {
@@ -21,7 +22,7 @@ namespace GFramework.LogWriters
             dateString = startdate.ToString("dd_MM_yyyy_HH_mm_ss");
         }
 
-        public override void Write(BaseLog log)
+        public override void Write(LogHolder log)
         {
             string filePath = Path.Combine(Environment.CurrentDirectory, "Log", log.Name, dateString + ".txt");
             string dirPath = Path.GetDirectoryName(filePath);

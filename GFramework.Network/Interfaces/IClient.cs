@@ -12,7 +12,7 @@ namespace GFramework.Network.Interfaces
     using EventArgs.Client;
 
     public interface IClient<TClient, TPacket>
-        where TClient : IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
         IPEndPoint EndPoint { get; set; }
@@ -33,5 +33,7 @@ namespace GFramework.Network.Interfaces
 
         void Send(TPacket packet);
         void Ping();
+
+        TPacket CreatePacket(ulong id);
     }
 }

@@ -10,7 +10,7 @@ namespace GFramework.Network.Packets
     using Bases;
     using Factories;
 
-    public class StreamPacketReader : BasePacket
+    public class StreamPacket : BasePacket
     {
         private MemoryStream memory;
         private BinaryReader reader;
@@ -34,12 +34,12 @@ namespace GFramework.Network.Packets
             protected set => memory.SetLength(value);
         }
 
-        public StreamPacketReader(ulong id) : base(id)
+        public StreamPacket(ulong id) : base(id)
         {
             Clear();
         }
 
-        public StreamPacketReader(ulong id, byte[] buffer) : base(id)
+        public StreamPacket(ulong id, byte[] buffer) : base(id)
         {
             memory = new MemoryStream(buffer);
             memory.Position = 0;

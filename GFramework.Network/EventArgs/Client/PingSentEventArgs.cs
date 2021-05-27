@@ -10,7 +10,7 @@ namespace GFramework.Network.EventArgs.Client
     using Bases;
 
     public class PingSentEventArgs<TClient, TPacket> : BaseClientEventArgs<TClient, TPacket>
-        where TClient : IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
         public DateTime SentAt { get; private set; }

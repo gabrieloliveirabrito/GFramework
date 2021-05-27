@@ -11,7 +11,7 @@ namespace GFramework.Network.EventArgs.Server
 
     public class ClientConnectedEventArgs<TServer, TClient, TPacket> : BaseServerEventArgs<TServer, TClient, TPacket>
         where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
         public TClient Client

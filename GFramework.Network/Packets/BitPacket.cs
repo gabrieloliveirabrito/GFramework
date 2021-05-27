@@ -9,17 +9,17 @@ namespace GFramework.Network.Packets
     using Bases;
     using Factories;
 
-    public class BitPacketReader : BasePacket
+    public class BitPacket : BasePacket
     {
         public override byte[] Data { get; set; }
         public int Offset { get; set; }
 
-        public BitPacketReader(ulong id) : base(id)
+        public BitPacket(ulong id) : base(id)
         {
             Data = new byte[Constants.MaxPacketLength];
         }
 
-        public BitPacketReader(ulong id, byte[] buffer) : base(id, buffer)
+        public BitPacket(ulong id, byte[] buffer) : base(id, buffer)
         {
 
         }

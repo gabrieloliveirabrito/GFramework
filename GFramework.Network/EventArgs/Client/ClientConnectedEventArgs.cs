@@ -10,7 +10,7 @@ namespace GFramework.Network.EventArgs.Client
     using Interfaces;
 
     public class ClientConnectedEventArgs<TClient, TPacket> : BaseClientEventArgs<TClient, TPacket>
-        where TClient : IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>
         where TPacket : BasePacket
     {
         public ClientConnectedEventArgs(TClient client) : base(client)

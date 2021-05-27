@@ -44,7 +44,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChatClient.cs" />
+    <Compile Include="ChatClientWrapper.cs" />
     <Compile Include="ChatServer.cs" />
+    <Compile Include="ChatServerWrapper.cs" />
+    <Compile Include="PacketReaders\ChatClientReader.cs" />
+    <Compile Include="PacketReaders\ChatMessageReader.cs" />
+    <Compile Include="PacketWriters\ChatClientWriter.cs" />
+    <Compile Include="PacketWriters\ChatMessageWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -61,5 +67,6 @@
       <Name>GFramework</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -8,8 +8,9 @@ namespace GFramework.Factories
 {
     using Bases;
     using Enums;
-    using LogWriters;
+    using Holders;
     using Interfaces;
+    using LogWriters;
 
     public class LoggerFactory : BaseFactory<string, BaseLogger>, ISingleton, IUpdater, IQueue
     {
@@ -57,7 +58,7 @@ namespace GFramework.Factories
         {
             if(!QueueFactory.IsEmpty(this))
             {
-                BaseLog log = QueueFactory.Dequeue<BaseLog>(this);
+                LogHolder log = QueueFactory.Dequeue<LogHolder>(this);
 
                 foreach(BaseLogWriter writer in writers)
                     writer.Write(log);
@@ -108,7 +109,7 @@ namespace GFramework.Factories
         protected internal void AppendLog(LogType type, string name, string message)
         {
             if (UpdaterFactory.IsRunning(this))
-                QueueFactory.Enqueue(this, new BaseLog(type, name, message));
+                QueueFactory.Enqueue(this, new LogHolder(type, name, message));
         }
     }
 }

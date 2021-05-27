@@ -42,7 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bases\BaseFactory.cs" />
-    <Compile Include="Bases\BaseLog.cs" />
     <Compile Include="Bases\BaseLogger.cs" />
     <Compile Include="Bases\BaseLogWriter.cs" />
     <Compile Include="Bases\BaseUpdater.cs" />
@@ -55,6 +54,7 @@
     <Compile Include="Factories\SingletonFactory.cs" />
     <Compile Include="Factories\UpdaterFactory.cs" />
     <Compile Include="Holders\ComponentHolder.cs" />
+    <Compile Include="Holders\LogHolder.cs" />
     <Compile Include="Interfaces\IComponent.cs" />
     <Compile Include="Interfaces\IQueue.cs" />
     <Compile Include="Interfaces\ISingleton.cs" />

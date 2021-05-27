@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-
+using Example.PacketWriters;
 using GFramework.Factories;
 using GFramework.LogWriters;
 
@@ -15,18 +15,18 @@ namespace Example
         {
             LoggerFactory.AddLogWriter<FileLogWriter>();
 
-            var log = LoggerFactory.GetLogger<Program>();
-            log.LogInfo("Info message");
-            log.LogSuccess("Success message");
-            log.LogWarning("Warning message");
-            log.LogError("Error message");
-            log.LogDebug("Debug message");
-            log.LogFatal(new Exception("Fatal message"));
+            var logger = LoggerFactory.GetLogger<Program>();
+            logger.LogInfo("Info message");
+            logger.LogSuccess("Success message");
+            logger.LogWarning("Warning message");
+            logger.LogError("Error message");
+            logger.LogDebug("Debug message");
+            logger.LogFatal(new Exception("Fatal message"));
 
             bool serve;
             while (true)
             {
-                log.LogInfo("Enter S to server, or C for client: ");
+                logger.LogInfo("Enter S to server, or C for client: ");
                 var line = Console.ReadLine().ToLowerInvariant();
 
                 if(line == "c")
@@ -41,35 +41,52 @@ namespace Example
                 }
                 else
                 {
-                    log.LogWarning("Invalid operation!");
+                    logger.LogWarning("Invalid operation!");
                 }
             }
 
             if (serve)
             {
-                ChatServer server = new ChatServer();
+                ChatServerWrapper server = new ChatServerWrapper();
+                /*server.Server.OnServerOpened += (s, e) =>
+                {
+                    ChatClient[] clients = new ChatClient[server.Server.MaximumClients - 1];
+                    for(int i = 0, n = clients.Length; i < n; i++)
+                    {
+                        var client = clients[i] = new ChatClient();
+                        client.Connect();
+                        //client.SendMessage($"Cliente {i}/{n}");
 
-                log.LogWarning("Enter without string to exit, with string to send message");
+                        Thread.Sleep(100);
+                    }
+                };*/
+                server.Open();
+
+                logger.LogWarning("Enter without string to exit, with string to send message");
 
                 string line;
                 while ((line = Console.ReadLine()) != "")
-                    server.SendMessage(line);
+                    server.SendToAll(new ChatMessageWriter { Message = line });
             }
             else
             {
-                ChatClient client = new ChatClient();
+                ChatClientWrapper client = new ChatClientWrapper();
+                if (client.Connect())
+                    logger.LogSuccess("Connect request has been sent! Response on event!");
+                else
+                    logger.LogError("Failed to sent connect request!");
 
-                log.LogWarning("Enter without string to exit, with string to send message");
+                logger.LogWarning("Enter without string to exit, with string to send message");
 
                 string line;
                 while ((line = Console.ReadLine()) != "")
                     if (line.ToLowerInvariant() == "ping")
-                        client.Ping();
+                        client.Socket.Ping();
                     else
-                        client.SendMessage(line);
+                        client.Send(new ChatMessageWriter { Message = line });
             }
 
-            log.LogWarning("Press Enter to exit...");
+            logger.LogWarning("Press Enter to exit...");
             Console.ReadLine();
             SingletonFactory.DestroyAll();
         }
