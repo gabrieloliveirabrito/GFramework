@@ -58,23 +58,24 @@ namespace GFramework.Network
 
         public bool DebugPackets { get; set; }
 
+        public TCPClient()
+        {
+            logger = LoggerFactory.GetLogger(this);
+            sendLock = new ManualResetEvent(true);
+        }
+
         public TCPClient(IPAddress address, int port) : this(new IPEndPoint(address, port))
         {
 
         }
 
-        public TCPClient(IPEndPoint endpoint)
+        public TCPClient(IPEndPoint endpoint) : this()
         {
-            logger = LoggerFactory.GetLogger(this);
-            sendLock = new ManualResetEvent(true);
             endPoint = endpoint;
         }
 
-        protected internal TCPClient(Socket socket)
+        protected internal TCPClient(Socket socket) : this()
         {
-            logger = LoggerFactory.GetLogger(this);
-            sendLock = new ManualResetEvent(true);
-
             EndPoint = (IPEndPoint)socket.RemoteEndPoint;
             Socket = socket;
         }
@@ -229,6 +230,24 @@ namespace GFramework.Network
             BeginReceiveEvent();
         }
 
+        private void HandleException(string method, Exception ex)
+        {
+            if (ex is SocketException)
+            {
+                SocketException socketException = ex as SocketException;
+                if (socketException.SocketErrorCode == SocketError.ConnectionReset)
+                {
+                    Disconnect(DisconnectReason.UserRequest);
+                    return;
+                }
+            }
+
+            logger.LogFatal(ex);
+            InvokeOnClientError(method, ex);
+
+            Disconnect(DisconnectReason.Error);
+        }
+
         #region Receive Callbacks
         private void BeginReceiveEvent()
         {
@@ -239,10 +258,7 @@ namespace GFramework.Network
             }
             catch (Exception ex)
             {
-                logger.LogFatal(ex);
-                InvokeOnClientError("BeginReceiveEvent", ex);
-
-                Disconnect(DisconnectReason.Error);
+                HandleException("BeginReceiveEvent", ex);
             }
         }
 
@@ -292,10 +308,7 @@ namespace GFramework.Network
             }
             catch (Exception ex)
             {
-                logger.LogFatal(ex);
-                InvokeOnClientError("EndReceiveEvent", ex);
-
-                Disconnect(DisconnectReason.Error);
+                HandleException("EndReceiveEvent", ex);
             }
         }
 
@@ -310,10 +323,7 @@ namespace GFramework.Network
             }
             catch (Exception ex)
             {
-                logger.LogFatal(ex);
-                InvokeOnClientError("BeginReceiveHeader", ex);
-
-                Disconnect(DisconnectReason.Error);
+                HandleException("BeginReceiveHeader", ex);
             }
         }
 
@@ -357,10 +367,7 @@ namespace GFramework.Network
             }
             catch (Exception ex)
             {
-                logger.LogFatal(ex);
-                InvokeOnClientError("EndReceiveHeader", ex);
-
-                Disconnect(DisconnectReason.Error);
+                HandleException("EndReceiveHeader", ex);
             }
         }
 
@@ -378,10 +385,7 @@ namespace GFramework.Network
             }
             catch (Exception ex)
             {
-                logger.LogFatal(ex);
-                InvokeOnClientError("BeginReceiveBuffer", ex);
-
-                Disconnect(DisconnectReason.Error);
+                HandleException("BeginReceiveBuffer", ex);
             }
         }
 
@@ -393,10 +397,7 @@ namespace GFramework.Network
             }
             catch (Exception ex)
             {
-                logger.LogFatal(ex);
-                InvokeOnClientError("BeginReceiveChunk", ex);
-
-                Disconnect(DisconnectReason.Error);
+                HandleException("BeginReceiveChunk", ex);
             }
         }
 
@@ -474,10 +475,7 @@ namespace GFramework.Network
             }
             catch (SocketException ex)
             {
-                logger.LogFatal(ex);
-                InvokeOnClientError("EndReceiveBuffer", ex);
-
-                Disconnect(DisconnectReason.Error);
+                HandleException("EndReceiveBuffer", ex);
             }
             catch (Exception ex)
             {
@@ -503,6 +501,8 @@ namespace GFramework.Network
             }
             catch (Exception ex)
             {
+                sendLock.Set();
+
                 logger.LogFatal(ex);
                 InvokeOnClientError("BeginSendEvent", ex);
             }

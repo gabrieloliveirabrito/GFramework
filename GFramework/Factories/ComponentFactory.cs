@@ -13,12 +13,12 @@ namespace GFramework.Factories
     public class ComponentFactory : BaseFactory<Type, ComponentHolder>, ISingleton
     {
         private static ComponentFactory Instance => SingletonFactory.RegisterSingleton<ComponentFactory>();
-        private static BaseLogger log;
+        private static BaseLogger logger;
 
         void ISingleton.Created()
         {
-            log = LoggerFactory.GetLogger<ComponentFactory>();
-            log.LogInfo("ComponentFactory has been enabled!");
+            logger = LoggerFactory.GetLogger<ComponentFactory>();
+            logger.LogInfo("ComponentFactory has been created!");
         }
 
         void ISingleton.Destroyed()
@@ -39,6 +39,8 @@ namespace GFramework.Factories
 
             if (Instance.TryGetInstance(componentType, out ComponentHolder holder))
                 return holder.Enable();
+            else if (typeof(ISingleton).IsAssignableFrom(componentType))
+                return Enable(SingletonFactory.RegisterSingleton(componentType) as IComponent);
             else
                 return Enable(Activator.CreateInstance(componentType) as IComponent);
         }
@@ -50,7 +52,7 @@ namespace GFramework.Factories
                 return holder.Enable();
             else
             {
-                holder = Instance.RegisterInstance(type, new ComponentHolder(component));
+                holder = Instance.RegisterInstance(type, new ComponentHolder(logger, component));
                 return holder.Enable();
             }
         }

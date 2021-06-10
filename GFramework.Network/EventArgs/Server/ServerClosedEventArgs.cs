@@ -11,7 +11,7 @@ namespace GFramework.Network.EventArgs.Server
 
     public class ServerClosedEventArgs<TServer, TClient, TPacket> : BaseServerEventArgs<TServer, TClient, TPacket>
         where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
         public ServerClosedEventArgs(TServer server) : base(server)

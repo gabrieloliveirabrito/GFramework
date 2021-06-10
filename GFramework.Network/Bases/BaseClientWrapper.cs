@@ -12,24 +12,29 @@ namespace GFramework.Network.Bases
     using EventArgs.Client;
 
     public abstract class BaseClientWrapper<TClient, TClientWrapper, TPacket>
-        where TClient : class, IClient<TClient, TPacket>
-        where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>
+        where TClient : class, IClient<TClient, TPacket>, new()
+        where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>, new()
         where TPacket : BasePacket
     {
         private Dictionary<ulong, BasePacketReader<TClient, TClientWrapper, TPacket>> packetReaders;
         public TClient Socket { get; private set; }
+
+        public BaseClientWrapper()
+        {
+            packetReaders = new Dictionary<ulong, BasePacketReader<TClient, TClientWrapper, TPacket>>();
+
+            Socket = new TClient();
+            Initialize();
+        }
 
         public BaseClientWrapper(IPAddress address, int port) : this(new IPEndPoint(address, port))
         {
             
         }
 
-        public BaseClientWrapper(IPEndPoint endpoint)
+        public BaseClientWrapper(IPEndPoint endpoint) : this()
         {
-            packetReaders = new Dictionary<ulong, BasePacketReader<TClient, TClientWrapper, TPacket>>();
-
-            Socket = (TClient)Activator.CreateInstance(typeof(TClient), endpoint);
-            Initialize();
+            Socket.EndPoint = endpoint;
         }
 
         protected internal void Initialize(TClient socket = null)

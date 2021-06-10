@@ -22,9 +22,11 @@ namespace GFramework.LogWriters
             dateString = startdate.ToString("dd_MM_yyyy_HH_mm_ss");
         }
 
+        string SafeName(string name) => name.Replace("<", "[").Replace(">", "]");
+
         public override void Write(LogHolder log)
         {
-            string filePath = Path.Combine(Environment.CurrentDirectory, "Log", log.Name, dateString + ".txt");
+            string filePath = Path.Combine(Environment.CurrentDirectory, "Log", SafeName(log.Name), dateString + ".txt");
             string dirPath = Path.GetDirectoryName(filePath);
 
             if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);

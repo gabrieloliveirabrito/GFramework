@@ -12,7 +12,7 @@ namespace GFramework.Network.Interfaces
     using EventArgs.Client;
 
     public interface IClient<TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
         IPEndPoint EndPoint { get; set; }

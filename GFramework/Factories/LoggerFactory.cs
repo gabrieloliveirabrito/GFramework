@@ -47,7 +47,6 @@ namespace GFramework.Factories
         {
             if (UpdaterFactory.IsRunning(this))
                 UpdaterFactory.Stop(this);
-            writers.Clear();
         }
 
         void IUpdater.Started()
@@ -103,8 +102,8 @@ namespace GFramework.Factories
         }
 
         public static BaseLogger GetLogger<T>() => GetLogger(typeof(T));
-        public static BaseLogger GetLogger(Type type) => GetLogger(type.Name);
-        public static BaseLogger GetLogger<T>(T o) => GetLogger(typeof(T));
+        public static BaseLogger GetLogger(Type type) => GetLogger(type.GetRealTypeName());
+        public static BaseLogger GetLogger<T>(T _) => GetLogger(typeof(T));
 
         protected internal void AppendLog(LogType type, string name, string message)
         {

@@ -14,8 +14,8 @@ namespace GFramework.Network.Bases
 
     public abstract class BaseServerWrapper<TServer, TClient, TClientWrapper, TPacket>
         where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>
-        where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>
+        where TClient : class, IClient<TClient, TPacket>, new()
+        where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>, new()
         where TPacket : BasePacket
     {
         private IDictionary<IPEndPoint, TClientWrapper> clients;
@@ -53,11 +53,11 @@ namespace GFramework.Network.Bases
             lock (clients)
             {
                 var wrapper = Activator.CreateInstance<TClientWrapper>();
-                wrapper.Initialize(e.Client);
 
                 e.Client.OnDisconnected += Client_OnDisconnected;
                 clients[e.Client.EndPoint] = wrapper;
 
+                wrapper.Initialize(e.Client);
                 OnClientConnected(wrapper);
             }
         }

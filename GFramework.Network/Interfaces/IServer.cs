@@ -12,7 +12,7 @@ namespace GFramework.Network.Interfaces
 
     public interface IServer<TServer, TClient, TPacket>
         where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>
+        where TClient : class, IClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
         IPEndPoint EndPoint { get; set; }

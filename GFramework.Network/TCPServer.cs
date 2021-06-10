@@ -210,10 +210,11 @@ namespace GFramework.Network
                 else
                 {
                     clients.Add(client);
-                    client.Initialize();
 
                     InvokeOnClientConnected(client);
                     client.OnDisconnected += Client_OnDisconnected;
+
+                    client.Initialize();
 
                 }
                 BeginAccept();
