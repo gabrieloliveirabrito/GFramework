@@ -17,7 +17,7 @@ namespace GFramework.Network.Bases
         public TClient Socket { get; internal set; }
 
 
-        public virtual ulong ID { get; }
+        public abstract ulong ID { get; }
         public abstract bool Read(TPacket packet);
         public abstract void Execute();
     }

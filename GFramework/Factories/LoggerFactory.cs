@@ -49,27 +49,31 @@ namespace GFramework.Factories
                 UpdaterFactory.Stop(this);
         }
 
-        void IUpdater.Started()
+        Task IUpdater.Started()
         {
+            return Task.CompletedTask;
         }
 
-        void IUpdater.Run()
+        Task IUpdater.Run()
         {
-            if(!QueueFactory.IsEmpty(this))
+            if (!QueueFactory.IsEmpty(this))
             {
                 LogHolder log = QueueFactory.Dequeue<LogHolder>(this);
 
-                foreach(BaseLogWriter writer in writers)
+                foreach (BaseLogWriter writer in writers)
                     writer.Write(log);
             }
+            return Task.CompletedTask;
         }
 
-        void IUpdater.Stopped()
+        Task IUpdater.Stopped()
         {
             Action[] callbacks = QueueFactory.DequeueAll<Action>(this);
 
             foreach (Action callback in callbacks)
                 callback();
+
+            return Task.CompletedTask;
         }
 
         BaseLogger InitializeLogger(Type loggerType, string name)
@@ -84,6 +88,11 @@ namespace GFramework.Factories
             logger.Factory = this;
 
             return logger;
+        }
+
+        public static void ClearLogWriters()
+        {
+            Instance.writers.Clear();
         }
 
         public static void AddLogWriter<TLogWriter>()

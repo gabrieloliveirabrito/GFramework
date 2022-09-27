@@ -21,6 +21,7 @@ namespace GFramework.Network.Bases
         private IDictionary<IPEndPoint, TClientWrapper> clients;
 
         public TServer Socket { get; private set; }
+        public IEnumerable<TClientWrapper> Clients { get => clients.Values; }
 
         public BaseServerWrapper(int port) : this(IPAddress.Any, port)
         {
@@ -64,7 +65,7 @@ namespace GFramework.Network.Bases
 
         private void Client_OnDisconnected(object sender, ClientDisconnectedEventArgs<TClient, TPacket> e)
         {
-            lock(clients)
+            lock (clients)
             {
                 if (clients.TryGetValue(e.Client.EndPoint, out TClientWrapper client))
                 {
@@ -81,7 +82,7 @@ namespace GFramework.Network.Bases
 
         private void Socket_OnServerClosed(object sender, ServerClosedEventArgs<TServer, TClient, TPacket> e)
         {
-            lock(clients)
+            lock (clients)
             {
                 clients.Clear();
             }
@@ -105,9 +106,9 @@ namespace GFramework.Network.Bases
         public void SendToAll<TPacketWriter>(TPacketWriter writer)
             where TPacketWriter : BasePacketWriter<TClient, TClientWrapper, TPacket>
         {
-            lock(clients)
+            lock (clients)
             {
-                foreach(var client in clients.Values)
+                foreach (var client in clients.Values)
                     client.Send(writer);
             }
         }

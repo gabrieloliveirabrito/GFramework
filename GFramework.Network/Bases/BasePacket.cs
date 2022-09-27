@@ -20,7 +20,10 @@ namespace GFramework.Network.Bases
 
         public BasePacket(ulong id, byte[] data) : this(id)
         {
-            Buffer.BlockCopy(data, 0, Data, 0, data.Length);
+            var target = new byte[data.Length];
+            Buffer.BlockCopy(data, 0, target, 0, data.Length);
+
+            Data = target;
             Length = data.Length;
         }
 

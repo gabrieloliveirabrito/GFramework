@@ -12,8 +12,8 @@ namespace GFramework.Interfaces
         uint Interval { get; }
         UpdaterMode Mode { get; }
 
-        void Started();
-        void Run();
-        void Stopped();
+        Task Started();
+        Task Run();
+        Task Stopped();
     }
 }

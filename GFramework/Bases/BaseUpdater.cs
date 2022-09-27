@@ -30,7 +30,7 @@ namespace GFramework.Bases
             if (updaterTask == null || updaterTask.Status != TaskStatus.Running)
             {
                 cancelSource = new CancellationTokenSource();
-                updaterTask = new Task(Work, cancelSource.Token, TaskCreationOptions.LongRunning);
+                updaterTask = new Task(Work, cancelSource.Token, TaskCreationOptions.RunContinuationsAsynchronously | TaskCreationOptions.LongRunning);
                 updaterTask.Start();
             }
         }
@@ -48,13 +48,13 @@ namespace GFramework.Bases
                 var token = cancelSource.Token;
                 token.ThrowIfCancellationRequested();
 
-                updater.Started();
-                while(!token.IsCancellationRequested)
+                await updater.Started();
+                while (!token.IsCancellationRequested)
                 {
                     if (updater.Mode == UpdaterMode.DelayBefore)
                         await Task.Delay(TimeSpan.FromMilliseconds(updater.Interval));
 
-                    updater.Run();
+                    await updater.Run();
 
                     if (updater.Mode == UpdaterMode.DelayAfter)
                         await Task.Delay(TimeSpan.FromMilliseconds(updater.Interval));
@@ -64,7 +64,7 @@ namespace GFramework.Bases
             }
             catch (OperationCanceledException)
             {
-                updater.Stopped();
+                await updater.Stopped();
             }
         }
     }

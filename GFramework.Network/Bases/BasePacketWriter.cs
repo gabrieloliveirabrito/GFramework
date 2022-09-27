@@ -16,7 +16,7 @@ namespace GFramework.Network.Bases
         public TClientWrapper Client { get; internal set; }
         public TClient Socket { get; internal set; }
 
-        public virtual ulong ID { get; }
+        public abstract ulong ID { get; }
         public abstract bool Write(TPacket packet);
     }
 
