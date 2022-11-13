@@ -181,7 +181,8 @@ namespace GFramework.Network
 
         public void Send(TPacket packet)
         {
-            BeginSendEvent(PacketEvent.Receive, packet);
+            if (Socket != null)
+                BeginSendEvent(PacketEvent.Receive, packet);
         }
 
         protected internal bool Disconnect(DisconnectReason reason, bool notify = false)

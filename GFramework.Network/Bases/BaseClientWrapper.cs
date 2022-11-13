@@ -10,6 +10,7 @@ namespace GFramework.Network.Bases
     using Interfaces;
     using Enums;
     using EventArgs.Client;
+    using System.Reflection;
 
     public abstract class BaseClientWrapper<TClient, TClientWrapper, TPacket>
         where TClient : class, IClient<TClient, TPacket>, new()
@@ -87,6 +88,23 @@ namespace GFramework.Network.Bases
                 packetReaders[reader.ID] = reader;
                 return true;
             }
+        }
+
+        public bool RegisterReader<TBaseReader>(Assembly origin, ref int registered)
+            where TBaseReader : BasePacketReader<TClient, TClientWrapper, TPacket>
+        {
+            registered = 0;
+            foreach(var type in origin.GetTypes())
+            {
+                if(type.BaseType == typeof(TBaseReader))
+                {
+                    var reader = (TBaseReader)Activator.CreateInstance(type);
+                    if (RegisterReader(reader))
+                        registered++;
+                }
+            }
+
+            return registered > 0;
         }
 
         public void Send<TPacketWriter>(TPacketWriter writer)
