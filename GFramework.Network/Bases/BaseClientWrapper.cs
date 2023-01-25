@@ -11,18 +11,22 @@ namespace GFramework.Network.Bases
     using Enums;
     using EventArgs.Client;
     using System.Reflection;
+    using System.Dynamic;
+    using Microsoft.Extensions.DependencyInjection;
 
     public abstract class BaseClientWrapper<TClient, TClientWrapper, TPacket>
         where TClient : class, IClient<TClient, TPacket>, new()
         where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>, new()
         where TPacket : BasePacket
     {
-        private Dictionary<ulong, BasePacketReader<TClient, TClientWrapper, TPacket>> packetReaders;
+        private Dictionary<ulong, Type> packetReaders;
+
         public TClient Socket { get; private set; }
+        public IServiceProvider Services { get; set; }
 
         public BaseClientWrapper()
         {
-            packetReaders = new Dictionary<ulong, BasePacketReader<TClient, TClientWrapper, TPacket>>();
+            packetReaders = new Dictionary<ulong, Type>();
 
             Socket = new TClient();
             Initialize();
@@ -30,7 +34,7 @@ namespace GFramework.Network.Bases
 
         public BaseClientWrapper(IPAddress address, int port) : this(new IPEndPoint(address, port))
         {
-            
+
         }
 
         public BaseClientWrapper(IPEndPoint endpoint) : this()
@@ -59,8 +63,9 @@ namespace GFramework.Network.Bases
 
         private void Socket_OnPacketReceivedWrapper(object sender, PacketReceivedEventArgs<TClient, TPacket> e)
         {
-            if (packetReaders.TryGetValue(e.Packet.ID, out BasePacketReader<TClient, TClientWrapper, TPacket> reader))
+            if (packetReaders.TryGetValue(e.Packet.ID, out Type readerType))
             {
+                var reader = CreateInstance<BasePacketReader<TClient, TClientWrapper, TPacket>>(readerType);
                 reader.Client = (TClientWrapper)this;
                 reader.Socket = Socket;
 
@@ -78,14 +83,25 @@ namespace GFramework.Network.Bases
         public bool Connect() => Socket.Connect();
         public bool Disconnect() => Socket.Disconnect();
 
-        public bool RegisterReader<TPacketReader>(TPacketReader reader)
+        private T CreateInstance<T>(Type target)
+        {
+            object instance = null;
+            if (Services == null)
+                instance = Activator.CreateInstance(target);
+            else
+                instance = ActivatorUtilities.CreateInstance(Services, target);
+
+            return instance == null ? default(T) : (T)instance;
+        }
+
+        public bool RegisterReader<TPacketReader>(ulong ID)
             where TPacketReader : BasePacketReader<TClient, TClientWrapper, TPacket>
         {
-            if (packetReaders.ContainsKey(reader.ID))
+            if (packetReaders.ContainsKey(ID))
                 return false;
             else
             {
-                packetReaders[reader.ID] = reader;
+                packetReaders[ID] = typeof(TPacketReader);
                 return true;
             }
         }
@@ -94,13 +110,16 @@ namespace GFramework.Network.Bases
             where TBaseReader : BasePacketReader<TClient, TClientWrapper, TPacket>
         {
             registered = 0;
-            foreach(var type in origin.GetTypes())
+            foreach (var type in origin.GetTypes())
             {
-                if(type.BaseType == typeof(TBaseReader))
+                if (type.BaseType == typeof(TBaseReader))
                 {
-                    var reader = (TBaseReader)Activator.CreateInstance(type);
-                    if (RegisterReader(reader))
+                    var reader = CreateInstance<TBaseReader>(type);
+                    if (!packetReaders.ContainsKey(reader.ID))
+                    {
+                        packetReaders[reader.ID] = type;
                         registered++;
+                    }
                 }
             }
 

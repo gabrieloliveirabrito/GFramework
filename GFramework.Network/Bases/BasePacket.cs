@@ -45,6 +45,7 @@ namespace GFramework.Network.Bases
         public abstract bool ReadBoolean();
         public abstract string ReadString();
         public abstract DateTime ReadDateTime();
+        public abstract TEnum ReadEnum<TEnum>();
 
         public abstract void WriteByte(byte data);
         public abstract void WriteBytes(byte[] data);
@@ -60,5 +61,6 @@ namespace GFramework.Network.Bases
         public abstract void WriteBoolean(bool data);
         public abstract void WriteString(string data);
         public abstract void WriteDateTime(DateTime data);
+        public abstract void WriteEnum<TEnum>(TEnum data);
     }
 }
