@@ -10,7 +10,7 @@ namespace GFramework.Network.EventArgs.Client
     using Bases;
 
     public class PongSentEventArgs<TClient, TPacket> : BaseClientEventArgs<TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>, new()
+        where TClient : class, IBaseClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
         public DateTime SentAt { get; private set; }

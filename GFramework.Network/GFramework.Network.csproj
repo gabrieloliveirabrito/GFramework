@@ -56,6 +56,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncTCPClient.cs" />
+    <Compile Include="AsyncTCPServer.cs" />
     <Compile Include="Bases\BaseClientWrapper.cs" />
     <Compile Include="Bases\BasePacket.cs" />
     <Compile Include="Bases\BaseServerWrapper.cs" />
@@ -80,6 +82,10 @@
     <Compile Include="Holders\EventHolder.cs" />
     <Compile Include="Holders\PacketHolder.cs" />
     <Compile Include="Holders\PingHolder.cs" />
+    <Compile Include="Interfaces\IAsyncClient.cs" />
+    <Compile Include="Interfaces\IAsyncServer.cs" />
+    <Compile Include="Interfaces\IBaseClient.cs" />
+    <Compile Include="Interfaces\IBaseServer.cs" />
     <Compile Include="Interfaces\IClient.cs" />
     <Compile Include="Bases\BasePacketReader.cs" />
     <Compile Include="Bases\BasePacketWriter.cs" />

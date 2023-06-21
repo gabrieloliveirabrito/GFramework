@@ -144,7 +144,8 @@ namespace GFramework.Network
                     throw new InvalidOperationException("Cannot start the socket because is already connected!");
 
                 Socket = new Socket(EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                Socket.BeginConnect(endPoint, EndConnect, null);
+                var result = Socket.BeginConnect(endPoint, EndConnect, null);
+                result.AsyncWaitHandle.WaitOne();
 
                 return true;
             }
@@ -493,12 +494,17 @@ namespace GFramework.Network
         {
             try
             {
-                sendLock.WaitOne();
+                if (Socket.Connected)
+                {
+                    sendLock.WaitOne();
 
-                var holder = new EventHolder(packetEvent);
-                holder.Packet = packet;
+                    var holder = new EventHolder(packetEvent);
+                    holder.Packet = packet;
 
-                Socket.BeginSend(holder.EventBuffer, 0, holder.EventBuffer.Length, SocketFlags.None, EndSendEvent, holder);
+                    Socket.BeginSend(holder.EventBuffer, 0, holder.EventBuffer.Length, SocketFlags.None, EndSendEvent, holder);
+                }
+                //else
+                  //  Disconnect();
             }
             catch (Exception ex)
             {

@@ -10,8 +10,8 @@ namespace GFramework.Network.EventArgs.Server
     using Interfaces;
 
     public class ServerOpenedEventArgs<TServer, TClient, TPacket> : BaseServerEventArgs<TServer, TClient, TPacket>
-        where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>, new()
+        where TServer : IBaseServer<TServer, TClient, TPacket>
+        where TClient : class, IBaseClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
         public ServerOpenedEventArgs(TServer server) : base(server)

@@ -15,7 +15,7 @@ namespace GFramework.Network.Bases
     using Microsoft.Extensions.DependencyInjection;
 
     public abstract class BaseClientWrapper<TClient, TClientWrapper, TPacket>
-        where TClient : class, IClient<TClient, TPacket>, new()
+        where TClient : class, IBaseClient<TClient, TPacket>, new()
         where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>, new()
         where TPacket : BasePacket
     {
@@ -80,8 +80,8 @@ namespace GFramework.Network.Bases
         protected virtual void OnPacketReceived(TPacket packet) { }
         protected virtual void OnPacketSent(TPacket packet) { }
 
-        public bool Connect() => Socket.Connect();
-        public bool Disconnect() => Socket.Disconnect();
+        //public bool Connect() => Socket.Connect();
+        //public bool Disconnect() => Socket.Disconnect();
 
         private T CreateInstance<T>(Type target)
         {
@@ -126,15 +126,16 @@ namespace GFramework.Network.Bases
             return registered > 0;
         }
 
-        public void Send<TPacketWriter>(TPacketWriter writer)
+        /*public void Send<TPacketWriter>(TPacketWriter writer)
             where TPacketWriter : BasePacketWriter<TClient, TClientWrapper, TPacket>
         {
+            if (!Socket.Connected) return;
             writer.Client = (TClientWrapper)this;
             writer.Socket = Socket;
 
             var packet = Socket.CreatePacket(writer.ID);
             if (writer.Write(packet))
                 Socket.Send(packet);
-        }
+        }*/
     }
 }

@@ -10,8 +10,8 @@ namespace GFramework.Network.EventArgs
     using Interfaces;
 
     public class BaseServerEventArgs<TServer, TClient, TPacket> : System.EventArgs
-        where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>, new()
+        where TServer : IBaseServer<TServer, TClient, TPacket>
+        where TClient : class, IBaseClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
         public DateTime Time { get; set; }

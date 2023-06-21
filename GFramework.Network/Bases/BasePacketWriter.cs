@@ -9,7 +9,7 @@ namespace GFramework.Network.Bases
     using Interfaces;
 
     public abstract class BasePacketWriter<TClient, TClientWrapper, TPacket> : IPacketWriter<TPacket>
-        where TClient : class, IClient<TClient, TPacket>, new()
+        where TClient : class, IBaseClient<TClient, TPacket>, new()
         where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>, new()
         where TPacket : BasePacket
     {
@@ -21,7 +21,7 @@ namespace GFramework.Network.Bases
     }
 
     public abstract class BasePacketWriter<TClient, TClientWrapper, TPacket, TPacketID> : BasePacketWriter<TClient, TClientWrapper, TPacket>, IPacketWriter<TPacket>
-        where TClient : class, IClient<TClient, TPacket>, new()
+        where TClient : class, IBaseClient<TClient, TPacket>, new()
         where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>, new()
         where TPacket : BasePacket
         where TPacketID : struct, Enum

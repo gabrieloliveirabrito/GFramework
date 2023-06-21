@@ -10,21 +10,11 @@ namespace GFramework.Network.Interfaces
     using Bases;
     using EventArgs.Server;
 
-    public interface IServer<TServer, TClient, TPacket>
+    public interface IServer<TServer, TClient, TPacket> : IBaseServer<TServer, TClient, TPacket>
         where TServer : IServer<TServer, TClient, TPacket>
         where TClient : class, IClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
-        IPEndPoint EndPoint { get; set; }
-        bool Listening { get; }
-        TClient[] Clients { get; }
-        uint MaximumClients { get; set; }
-
-        event EventHandler<ServerOpenedEventArgs<TServer, TClient, TPacket>> OnServerOpened;
-        event EventHandler<ServerClosedEventArgs<TServer, TClient, TPacket>> OnServerClosed;
-        event EventHandler<ServerErrorEventArgs<TServer, TClient, TPacket>> OnServerError;
-        event EventHandler<ClientConnectedEventArgs<TServer, TClient, TPacket>> OnClientConnected;
-
         bool Open();
         bool Close();
 

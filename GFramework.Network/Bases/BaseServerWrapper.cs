@@ -13,8 +13,8 @@ namespace GFramework.Network.Bases
     using Interfaces;
 
     public abstract class BaseServerWrapper<TServer, TClient, TClientWrapper, TPacket>
-        where TServer : IServer<TServer, TClient, TPacket>
-        where TClient : class, IClient<TClient, TPacket>, new()
+        where TServer : IBaseServer<TServer, TClient, TPacket>
+        where TClient : class, IBaseClient<TClient, TPacket>, new()
         where TClientWrapper : BaseClientWrapper<TClient, TClientWrapper, TPacket>, new()
         where TPacket : BasePacket
     {
@@ -100,10 +100,10 @@ namespace GFramework.Network.Bases
         protected virtual void OnClientConnected(TClientWrapper client) { }
         protected virtual void OnClientDisconnect(TClientWrapper client, DisconnectReason reason) { }
 
-        public bool Open() => Socket.Open();
-        public bool Close() => Socket.Close();
+        /*public bool Open() => Socket.Open();
+        public bool Close() => Socket.Close();*/
 
-        public void SendToAll<TPacketWriter>(TPacketWriter writer)
+        /*public void SendToAll<TPacketWriter>(TPacketWriter writer)
             where TPacketWriter : BasePacketWriter<TClient, TClientWrapper, TPacket>
         {
             lock (clients)
@@ -111,6 +111,6 @@ namespace GFramework.Network.Bases
                 foreach (var client in clients.Values)
                     client.Send(writer);
             }
-        }
+        }*/
     }
 }

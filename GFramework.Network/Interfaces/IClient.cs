@@ -11,23 +11,10 @@ namespace GFramework.Network.Interfaces
     using Bases;
     using EventArgs.Client;
 
-    public interface IClient<TClient, TPacket>
+    public interface IClient<TClient, TPacket> : IBaseClient<TClient, TPacket>
         where TClient : class, IClient<TClient, TPacket>, new()
         where TPacket : BasePacket
     {
-        IPEndPoint EndPoint { get; set; }
-        bool Connected { get; }
-
-        event EventHandler<ClientConnectedEventArgs<TClient, TPacket>> OnConnected;
-        event EventHandler<ClientDisconnectedEventArgs<TClient, TPacket>> OnDisconnected;
-        event EventHandler<ClientErrorEventArgs<TClient, TPacket>> OnClientError;
-        event EventHandler<PacketSentEventArgs<TClient, TPacket>> OnPacketSent;
-        event EventHandler<PacketReceivedEventArgs<TClient, TPacket>> OnPacketReceived;
-        event EventHandler<PingSentEventArgs<TClient, TPacket>> OnPingSent;
-        event EventHandler<PingReceivedEventArgs<TClient, TPacket>> OnPingReceived;
-        event EventHandler<PongSentEventArgs<TClient, TPacket>> OnPongSent;
-        event EventHandler<PongReceivedEventArgs<TClient, TPacket>> OnPongReceived;
-
         bool Connect();
         bool Disconnect();
 
