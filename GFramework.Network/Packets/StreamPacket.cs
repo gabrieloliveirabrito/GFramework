@@ -28,9 +28,9 @@ namespace GFramework.Network.Packets
             }
         }
 
-        public override long Length
+        public override int Length
         {
-            get => memory.Length;
+            get => (int)memory.Length;
             protected set => memory.SetLength(value);
         }
 

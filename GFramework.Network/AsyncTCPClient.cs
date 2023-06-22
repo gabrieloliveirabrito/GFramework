@@ -100,13 +100,13 @@ namespace GFramework.Network
 
         protected internal void Initialize()
         {
-            InvokeOnConnected();
-
             stream = new NetworkStream(Socket);
             cancellationToken = new CancellationTokenSource();
 
             wrapperTask = new Task(SocketProc, cancellationToken.Token, TaskCreationOptions.LongRunning);
             wrapperTask.Start();
+
+            InvokeOnConnected();
         }
 
         #region Event Invokers
@@ -210,22 +210,23 @@ namespace GFramework.Network
             {
                 sendLock.WaitOne();
 
-                var idBuffer = BitConverter.GetBytes(packet.ID);
-                var sizeBuffer = BitConverter.GetBytes(packet.Data.Length);
-
-                Buffer.BlockCopy(idBuffer, 0, sendBuffer, 0, idBuffer.Length);
-                Buffer.BlockCopy(sizeBuffer, 0, sendBuffer, idBuffer.Length, sizeBuffer.Length);
-                Buffer.BlockCopy(packet.Data, 0, sendBuffer, idBuffer.Length + sizeBuffer.Length, packet.Data.Length);
-
-                int toSent = idBuffer.Length + sizeBuffer.Length + packet.Data.Length;
+                var header = packet.GetHeader();
+                Buffer.BlockCopy(header, 0, sendBuffer, 0, header.Length);
+                if (packet.Length > 0)
+                    Buffer.BlockCopy(packet.Data, 0, sendBuffer, header.Length, packet.Length);
+                
+                int toSent = header.Length + packet.Length;
                 sendPosition = 0;
 
                 while (toSent > sendPosition)
                 {
-                    Buffer.BlockCopy(sendBuffer, sendPosition, sendChunk, 0, sendChunk.Length);
+                    var pos = toSent - sendPosition;
+                    var rest = pos < sendChunk.Length ? pos : sendChunk.Length;
+                    Buffer.BlockCopy(sendBuffer, sendPosition, sendChunk, 0, rest);
                     //sendPosition += await Socket.SendAsync(new ArraySegment<byte>(sendBuffer), SocketFlags.None);
-                    await stream.WriteAsync(sendChunk, 0, sendChunk.Length);
-                    sendPosition += sendChunk.Length;
+                    await stream.WriteAsync(sendChunk, 0, rest);
+
+                    sendPosition += rest;
                 }
 
                 sendLock.Set();
@@ -242,7 +243,8 @@ namespace GFramework.Network
             var packet = CreatePacket(0x0);
             packet.WriteDateTime(DateTime.Now);
 
-            return Send(packet);
+            return Task.Delay(100);
+            //return Send(packet);
         }
 
         public TPacket CreatePacket(ulong id)
@@ -301,17 +303,20 @@ namespace GFramework.Network
                         return;
                     }
 
-                    var id = BitConverter.ToUInt64(receiveBuffer, 0);
-                    var packet = CreatePacket(id);
-                    var size = BitConverter.ToInt32(receiveBuffer, sizeof(ulong));
+                    var packet = CreatePacket(0);
+                    packet.ReadHeader(receiveBuffer);
 
-                    if (!await ReadBuffer(size))
+                    if (packet.Length > 0)
                     {
-                        await Disconnect(DisconnectReason.ConnectionFailed, false);
-                        return;
+                        if (!await ReadBuffer(packet.Length))
+                        {
+                            await Disconnect(DisconnectReason.ConnectionFailed, false);
+                            return;
+                        }
+
+                        packet.Data = receiveBuffer;
                     }
 
-                    packet.Data = receiveBuffer;
                     InvokeOnPacketReceived(packet);
                 }
                 catch (Exception ex)
@@ -324,11 +329,12 @@ namespace GFramework.Network
         private async Task<bool> ReadBuffer(int length)
         {
             receivePosition = 0;
-            int received = 0;
+            int received = 0, toReceive = 0;
 
             while (receivePosition < length)
             {
-                received = await stream.ReadAsync(receiveChunk, 0, receiveChunk.Length);
+                toReceive = length > receiveChunk.Length ? receiveChunk.Length : length;
+                received = await stream.ReadAsync(receiveChunk, 0, toReceive);
                 if (received == 0)
                     return false;
 

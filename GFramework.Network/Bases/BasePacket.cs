@@ -11,7 +11,10 @@ namespace GFramework.Network.Bases
         public ulong ID { get; set; }
         public abstract byte[] Data { get; set; }
 
-        public virtual long Length { get; protected set; }
+        public virtual int Length
+        {
+            get; protected set;
+        }
 
         public BasePacket(ulong id)
         {
@@ -25,6 +28,21 @@ namespace GFramework.Network.Bases
 
             Data = target;
             Length = data.Length;
+        }
+
+        public void ReadHeader(byte[] header)
+        {
+            Length = BitConverter.ToInt32(header, 0);
+            ID = BitConverter.ToUInt64(header, sizeof(int));
+        }
+
+        public byte[] GetHeader()
+        {
+            byte[] header = new byte[sizeof(int) + sizeof(ulong)];
+            Buffer.BlockCopy(BitConverter.GetBytes(Length), 0, header, 0, sizeof(int));
+            Buffer.BlockCopy(BitConverter.GetBytes(ID), 0, header, sizeof(int), sizeof(ulong));
+
+            return header;
         }
 
         public abstract void Dispose();
